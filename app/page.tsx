@@ -26,7 +26,9 @@ export default function Page() {
           <footer className="border-border border-t">
             <div className="text-muted-foreground mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-6 py-8 font-mono text-xs">
               <span>Pragmatikos · real sessions, pooled</span>
-              <span>higher ships more · thin evidence pulled toward the middle</span>
+              <a href="https://p.foundation" target="_blank" rel="noreferrer" className="hover:text-foreground hover:underline">
+                © P Foundation
+              </a>
             </div>
           </footer>
         </main>
