@@ -20,7 +20,7 @@ export function Hero () {
               <a href="#score">See the rankings</a>
             </Button>
             <Button variant="outline" size="lg" asChild>
-              <a href="#contribute">Add your sessions</a>
+              <a href="#contribute">Contribute data</a>
             </Button>
           </div>
         </Reveal>

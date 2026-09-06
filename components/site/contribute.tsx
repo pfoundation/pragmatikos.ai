@@ -134,20 +134,7 @@ export function Contribute () {
           Twenty fields per cycle — day, models, turns, edits, cost, shipping. No paths, prompts, session ids or projects. Preview in the
           deck&apos;s Contribute panel before anything leaves your machine.
         </p>
-        <div className="mt-5 flex flex-wrap gap-3">
-          <Button asChild>
-            <a href="https://github.com/pfoundation/ocInsights#contributing-your-data" target="_blank" rel="noreferrer">
-              Share your numbers
-              <ArrowUpRight />
-            </a>
-          </Button>
-          <Button variant="outline" asChild>
-            <a href="https://github.com/pfoundation/ocInsights" target="_blank" rel="noreferrer">
-              ocInsights on GitHub
-              <ArrowUpRight />
-            </a>
-          </Button>
-        </div>
+
       </div>
     </section>
   );
