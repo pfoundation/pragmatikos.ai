@@ -1,9 +1,10 @@
 // Shared overall-score math for scripts/sample.ts (local data.json) and
-// scripts/pool.ts (pooled contributions). Mirrors the ocProductivity deck's
+// scripts/pool.ts (pooled contributions). Mirrors the ocInsights deck's
 // overall card (OVERALL_CFG) exactly — ten axes in six weighted tiers, log-odds
-// for rates, k=10 evidence weighting on a fixed ±2 span. When the deck changes,
-// port here; never invent scoring — redirect methodology changes to
-// ocProductivity first.
+// for rates, k=10 evidence weighting on a fixed ±2 span. The ship rate divides
+// by ship-judged cycles (tshipe 0); pending (1) and unshippable (2) cycles
+// stay in process axes only. When the deck changes, port here; never invent
+// scoring — redirect methodology changes to ocInsights first.
 export const MIN_JUDGED = 10;
 export const TK = 10;
 export const SPAN = 2;
@@ -36,7 +37,7 @@ const KIND: Record<AxisKey, Kind> = {
   lat: 'ratio',
 };
 const EV: Record<AxisKey, string> = {
-  shipr: 'hjudged',
+  shipr: 'hshipJudged',
   oneshot: 'hshipped',
   ttss: 'hshipped',
   hps: 'hshipped',
@@ -123,6 +124,7 @@ export interface Acc {
   hu: number;
   ha: number;
   hjudged: number;
+  hshipJudged: number;
   hshipped: number;
   hshippedCosted: number;
   huShip: number;
@@ -144,6 +146,7 @@ function blank(): Acc {
     hu: 0,
     ha: 0,
     hjudged: 0,
+    hshipJudged: 0,
     hshipped: 0,
     hshippedCosted: 0,
     huShip: 0,
@@ -165,6 +168,7 @@ const NUMKEYS = [
   'hu',
   'ha',
   'hjudged',
+  'hshipJudged',
   'hshipped',
   'hshippedCosted',
   'huShip',
@@ -198,6 +202,7 @@ export type CycleFacts = {
   teerr: number;
   tcost: number;
   tship: number;
+  tshipe: number;
   thrs: number;
   tver: number;
   tabort: number;
@@ -215,6 +220,7 @@ function addCycle(e: Acc, f: CycleFacts): void {
   e.hu += f.u;
   e.ha += f.a;
   e.hjudged += 1;
+  if (f.tshipe === 0) e.hshipJudged += 1;
   e.hedits += f.tedits;
   e.hteerr += f.teerr;
   e.hcost += f.tcost;
@@ -294,7 +300,7 @@ function groupUp<T extends Acc>(rows: Iterable<T>, keyOf: (r: T) => { key: strin
       acc: a,
       latbag: g.latbag,
       raw: {
-        shipr: (100 * a.hshipped) / a.hjudged,
+        shipr: a.hshipJudged ? (100 * a.hshipped) / a.hshipJudged : null,
         oneshot: a.hshipped ? (100 * a.hone) / a.hshipped : null,
         ttss: a.hshipped ? a.huShip / a.hshipped : null,
         hps: a.hshipped ? a.hhrsShip / a.hshipped : null,
@@ -315,7 +321,7 @@ function poolOf(groups: { acc: Acc; latbag: [number, number][] }[]): Record<Axis
   const dv = (a: number, b: number) => (b > 0 ? a / b : null);
   const cb = groups.filter((g) => g.acc.hcostShip > 0);
   return {
-    shipr: dv(100 * S('hshipped'), S('hjudged')),
+    shipr: dv(100 * S('hshipped'), S('hshipJudged')),
     oneshot: dv(100 * S('hone'), S('hshipped')),
     ttss: dv(S('huShip'), S('hshipped')),
     hps: dv(S('hhrsShip'), S('hshipped')),
@@ -383,6 +389,7 @@ function finish(groups: G[], labelOf: (key: string) => string) {
       hue: g.hue,
       hjudged: g.acc.hjudged,
       hshipped: g.acc.hshipped,
+      hshipJudged: g.acc.hshipJudged,
       raw: { ...g.raw },
       adj: { ...adj },
       ev,
@@ -414,7 +421,12 @@ export type SampleMeta = {
   end: string;
   judged: number;
   shipped: number;
+  shipJudged: number;
+  pending: number;
+  impossible: number;
   contributors?: number;
+  /** Contribution contract version from pragma.cycles. Absent on sample.json. */
+  schema?: number;
   minJudged: number;
   evidenceK: number;
   weights: string;

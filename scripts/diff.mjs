@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Cell-by-cell diff: pragma data/sample.json (famCombo view) vs the
-// ocProductivity deck's #otable at deck defaults (family, planner→builder
+// ocInsights deck's #otable at deck defaults (family, planner→builder
 // combos, weighted, all time, small filter off) — the exact configuration
 // scripts/sample.ts mirrors. Usage: bun scripts/diff.mjs
 // Fails loudly on any cell outside display-rounding tolerance.
@@ -8,7 +8,7 @@ import path from 'node:path';
 import { readFileSync } from 'node:fs';
 
 const pw = await import('playwright').catch(() => import('/home/ubuntu/dev/datastudio/node_modules/playwright/index.mjs'));
-const deck = path.resolve(new URL('../../ocProductivity/opencode_time_full.html', import.meta.url).pathname);
+const deck = path.resolve(new URL('../../ocInsights/opencode_time_full.html', import.meta.url).pathname);
 const sample = JSON.parse(readFileSync(new URL('../data/sample.json', import.meta.url)));
 
 const browser = await pw.chromium.launch();
@@ -87,11 +87,16 @@ for (const g of sampGroups) {
 
 // meta totals vs the deck summary line
 const osum = await page.locator('#osum').innerText();
-const m = osum.match(/([\d,]+) judged cycles.*→ ([\d,]+) shipped/);
+const m = osum.match(/([\d,]+) judged cycles.*?([\d,]+) ship-judged \((\d+) pending, (\d+) unshippable\) .*→ ([\d,]+) shipped/);
 check(
-  'meta judged/shipped',
-  !!m && +m[1].replace(/,/g, '') === sample.meta.judged && +m[2].replace(/,/g, '') === sample.meta.shipped,
-  osum.slice(0, 140),
+  'meta judged/ship-judged/shipped',
+  !!m &&
+    +m[1].replace(/,/g, '') === sample.meta.judged &&
+    +m[2].replace(/,/g, '') === sample.meta.shipJudged &&
+    +m[3] === sample.meta.pending &&
+    +m[4] === sample.meta.impossible &&
+    +m[5].replace(/,/g, '') === sample.meta.shipped,
+  osum.slice(0, 180),
 );
 
 await browser.close();

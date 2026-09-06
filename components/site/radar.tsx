@@ -1,21 +1,21 @@
 'use client';
 
-import { AXES, famFill, meta, position, views, type AxisKey, type ScoreGroup } from '@/lib/score';
+import { AXES, famFill, meta, position, STRIP_AXES, views, type AxisKey, type ScoreGroup } from '@/lib/score';
 import { useSharedHot } from '@/lib/hot';
 import { useMemo, useState } from 'react';
 
 /** Deck overall-radar labels, tier order. */
 const LABELS: Record<AxisKey, string> = {
-  shipr: 'Higher ship %',
-  oneshot: 'Higher one-shot %',
-  ttss: 'Fewer turns/ship',
-  hps: 'Fewer hours/ship',
-  dpss: 'Fewer $/ship',
-  eerrp: 'Fewer edit errors',
-  abortp: 'Fewer aborts',
-  verp: 'Higher verified %',
-  ept: 'More edits/turn',
-  lat: 'Faster steps',
+  shipr: 'Ship %',
+  oneshot: 'One-shot %',
+  ttss: 'Turns/ship',
+  hps: 'Hours/ship',
+  dpss: '$/ship',
+  eerrp: 'Tool errors',
+  abortp: 'Aborts',
+  verp: 'Verified %',
+  ept: 'Edits/turn',
+  lat: 'Time/step',
 };
 
 /** Same geometry and normalisation as the deck's overall radar (relative-to-pool scale). */
@@ -30,6 +30,27 @@ const pt = (i: number, f: number): [number, number] => {
   return [CX + R * f * Math.cos(a), CY + R * f * Math.sin(a)];
 };
 const f1 = (n: number): string => n.toFixed(1);
+
+/** Greens first like STRIP_AXES; then lat↔ttss so Time/step sits where Turns/ship was. */
+const DISP = (() => {
+  const a = [...STRIP_AXES];
+  const i = a.findIndex((x) => x.key === 'lat');
+  const j = a.findIndex((x) => x.key === 'ttss');
+  if (i >= 0 && j >= 0) [a[i], a[j]] = [a[j], a[i]];
+  return a;
+})();
+const rim = DISP.map((_, i) => pt(i, 1));
+const mid = (i: number): [number, number] => {
+  const a = rim[i];
+  const b = rim[(i + 1) % N];
+  return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+};
+const kite = (i: number): string => {
+  const v = rim[i];
+  const p = mid((i - 1 + N) % N);
+  const n = mid(i);
+  return `M${CX},${CY}L${f1(p[0])},${f1(p[1])}L${f1(v[0])},${f1(v[1])}L${f1(n[0])},${f1(n[1])} Z`;
+};
 
 export function Radar() {
   const view = views.famCombo;
@@ -48,6 +69,7 @@ export function Radar() {
 
   const norm = (g: ScoreGroup, k: AxisKey): number | null => {
     const q = position(g.adj[k], view.pool[k], k);
+    // Better outward: no mirroring, so a vertex near the rim is better on every spoke.
     return q === null ? null : 0.06 + (0.88 * (q + 1)) / 2;
   };
 
@@ -61,15 +83,19 @@ export function Radar() {
         viewBox="0 0 600 470"
         className="h-auto w-full"
         role="img"
-        aria-label="Radar of the top family pairings: ten axes, middle ring is the pool, outward is better"
+        aria-label="Radar of the top family pairings: ten axes, higher-is-better first, middle ring is the pool, outward is better"
         onMouseLeave={() => setHot(null)}
       >
-        <path
-          d={`M${CX},${CY}${Array.from({ length: BAND_N }, (_, i) => `L${f1(pt(i, 1)[0])},${f1(pt(i, 1)[1])}`).join('')} Z`}
-          fill="var(--primary)"
-          fillOpacity={0.07}
-          style={{ pointerEvents: 'none' }}
-        />
+        {DISP.map((a, i) => (
+          <path
+            key={`bg-${a.key}`}
+            d={kite(i)}
+            fill={a.hi ? 'var(--chart-2)' : 'var(--chart-5)'}
+            fillOpacity={0.07}
+            style={{ pointerEvents: 'none' }}
+            data-bg={a.hi ? 'hi' : 'lo'}
+          />
+        ))}
         {[0.25, 0.5, 0.75, 1].map((f) => (
           <path
             key={f}
@@ -83,22 +109,30 @@ export function Radar() {
         <text x={f1(poolPt[0])} y={f1(poolPt[1] - 5)} textAnchor="middle" fontSize={10} fill="var(--foreground)" opacity={0.6}>
           pool
         </text>
-        {AXES.map((a, i) => {
+        {DISP.map((a, i) => {
           const q = pt(i, 1);
           const o = pt(i, 1.16);
           const primary = i < BAND_N;
           return (
             <g key={a.key} style={{ pointerEvents: 'none' }}>
-              <line x1={CX} y1={CY} x2={f1(q[0])} y2={f1(q[1])} stroke="var(--foreground)" opacity={primary ? 0.3 : 0.12} />
+              <line
+                x1={CX}
+                y1={CY}
+                x2={f1(q[0])}
+                y2={f1(q[1])}
+                stroke={a.hi ? 'var(--chart-2)' : 'var(--chart-5)'}
+                opacity={primary ? 0.35 : 0.2}
+              />
               <text
                 x={f1(o[0])}
                 y={f1(o[1] + 4)}
                 textAnchor="middle"
                 fontSize={12}
-                fill={primary ? 'var(--primary)' : 'var(--foreground)'}
-                opacity={primary ? 1 : 0.75}
+                fill={a.hi ? 'var(--chart-2)' : 'var(--chart-5)'}
+                opacity={1}
                 fontWeight={primary ? 600 : undefined}
                 fontFamily="Inconsolata, monospace"
+                data-dir={a.hi ? 'hi' : 'lo'}
               >
                 {LABELS[a.key]}
               </text>
@@ -106,7 +140,7 @@ export function Radar() {
           );
         })}
         {groups.map((g, gi) => {
-          const def = AXES.map((a, ai) => {
+          const def = DISP.map((a, ai) => {
             const f = norm(g, a.key);
             return f === null ? null : pt(ai, f);
           });

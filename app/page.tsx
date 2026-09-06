@@ -1,6 +1,7 @@
 import { Anatomy } from '@/components/site/anatomy';
 import { Blindspot } from '@/components/site/blindspot';
 import { Contribute } from '@/components/site/contribute';
+import { ContributionFlow } from '@/components/site/contribution-flow';
 import { Header } from '@/components/site/header';
 import { Hero } from '@/components/site/hero';
 import { Recorder } from '@/components/site/recorder';
@@ -23,6 +24,7 @@ export default function Page() {
           <Anatomy />
           <Recorder />
           <Contribute />
+          <ContributionFlow />
           <footer className="border-border border-t">
             <div className="text-muted-foreground mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-6 py-8 font-mono text-xs">
               <span>Pragmatikos · real sessions, pooled</span>

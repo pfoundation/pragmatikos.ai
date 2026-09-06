@@ -2,12 +2,12 @@ import { Button } from '@/components/ui/button';
 import { Reveal } from '@/lib/reveal';
 import { Radar } from './radar';
 
-export function Hero() {
+export function Hero () {
   return (
     <section className="border-border border-b">
       <div className="mx-auto grid max-w-6xl items-center gap-10 px-6 py-14 md:grid-cols-2 md:py-20">
         <Reveal>
-          <p className="font-mono text-xs text-primary">Pragmatikos</p>
+          <p className="font-mono text-xs text-primary">For OpenCode 2.0</p>
           <h1 className="mt-2 max-w-3xl text-3xl font-semibold tracking-tight md:text-5xl">Benchmarks score models. You run setups.</h1>
           <p className="text-muted-foreground mt-4 max-w-2xl text-sm leading-relaxed md:text-base">
             A benchmark is a clean task, a hidden test and a single model. Real work is a messy repo, your tools, your steering — and
@@ -24,7 +24,7 @@ export function Hero() {
             </Button>
           </div>
         </Reveal>
-        <Reveal delay={150} y={12}>
+        <Reveal delay={ 150 } y={ 12 }>
           <Radar />
         </Reveal>
       </div>

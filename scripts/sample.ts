@@ -1,4 +1,4 @@
-// Reads ../ocProductivity/data.json and writes example overall-score rows.
+// Reads ../ocInsights/data.json and writes example overall-score rows.
 // Scoring lives in ./lib/scoring.ts (shared with pool.ts); this file only
 // adapts the deck's SESS/CYC rows to CycleFacts.
 // Labels use real model ids; no file paths, author names, prompts or session
@@ -7,14 +7,14 @@ import { existsSync } from 'node:fs';
 
 import { accumulate, buildOutput, isJudged, MIN_JUDGED, TK, WEIGHTS, type CycleFacts } from './lib/scoring.ts';
 
-const SRC = new URL('../../ocProductivity/data.json', import.meta.url);
+const SRC = new URL('../../ocInsights/data.json', import.meta.url);
 const OUT = new URL('../data/sample.json', import.meta.url);
 
 type Row = (number | string)[];
 
 async function main() {
   if (!existsSync(SRC)) {
-    console.error(`sample: ${decodeURIComponent(SRC.pathname)} not found; run ocProductivity extract first`);
+    console.error(`sample: ${decodeURIComponent(SRC.pathname)} not found; run ocInsights extract first`);
     process.exit(1);
   }
   const d = await Bun.file(SRC).json();
@@ -30,14 +30,14 @@ async function main() {
   const need = (cols: Record<string, number>, names: string[], what: string) => {
     for (const n of names)
       if (cols[n] === undefined) {
-        console.error(`sample: ${what} column ${n} missing; re-run ocProductivity extract`);
+        console.error(`sample: ${what} column ${n} missing; re-run ocInsights extract`);
         process.exit(1);
       }
   };
   need(SC, ['child', 'model', 'prov', 'role'], 'SESS');
   need(
     CC,
-    ['sess', 'a', 'u', 'tedits', 'tpaths', 'teerr', 'tcost', 'tship', 'thrs', 'tver', 'tabort', 'latmed', 'pm', 'pp', 'bm', 'bp'],
+    ['sess', 'a', 'u', 'tedits', 'tpaths', 'teerr', 'tcost', 'tship', 'tshipe', 'thrs', 'tver', 'tabort', 'latmed', 'pm', 'pp', 'bm', 'bp'],
     'CYC',
   );
 
@@ -64,6 +64,7 @@ async function main() {
       teerr: c[CC.teerr] as number,
       tcost: c[CC.tcost] as number,
       tship: c[CC.tship] as number,
+      tshipe: c[CC.tshipe] as number,
       thrs: c[CC.thrs] as number,
       tver: c[CC.tver] as number,
       tabort: c[CC.tabort] as number,
@@ -74,10 +75,16 @@ async function main() {
 
   let judged = 0;
   let shipped = 0;
+  let shipJudged = 0;
+  let pending = 0;
+  let impossible = 0;
   for (const f of facts) {
     if (f.pm === null || f.bm === null) continue;
     if (!isJudged(f)) continue;
     judged += 1;
+    if (f.tshipe === 0) shipJudged += 1;
+    else if (f.tshipe === 1) pending += 1;
+    else impossible += 1;
     if (f.tship) shipped += 1;
   }
 
@@ -89,6 +96,9 @@ async function main() {
       end: d.meta.end,
       judged,
       shipped,
+      shipJudged,
+      pending,
+      impossible,
       minJudged: MIN_JUDGED,
       evidenceK: TK,
       weights: WEIGHTS,

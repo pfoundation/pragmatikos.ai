@@ -31,7 +31,7 @@ export const AXES: AxisMeta[] = [
   { key: 'ttss', label: 'Turns per ship', short: 'Turns/ship', hi: false, kind: 'ratio', tier: 'cost', format: (v) => v.toFixed(1) },
   { key: 'hps', label: 'Hours per ship', short: 'Hours/ship', hi: false, kind: 'ratio', tier: 'cost', format: (v) => v.toFixed(1) },
   { key: 'dpss', label: 'Dollars per ship', short: '$/ship', hi: false, kind: 'ratio', tier: 'cost', format: (v) => `$${v.toFixed(2)}` },
-  { key: 'eerrp', label: 'Edit errors', short: 'Edit err %', hi: false, kind: 'err', tier: 'precision', format: (v) => `${v.toFixed(1)}%` },
+  { key: 'eerrp', label: 'Tool errors', short: 'Tool err %', hi: false, kind: 'err', tier: 'precision', format: (v) => `${v.toFixed(1)}%` },
   { key: 'abortp', label: 'Aborts', short: 'Abort %', hi: false, kind: 'err', tier: 'precision', format: (v) => `${v.toFixed(1)}%` },
   {
     key: 'verp',
@@ -43,7 +43,7 @@ export const AXES: AxisMeta[] = [
     format: (v) => `${v.toFixed(0)}%`,
   },
   { key: 'ept', label: 'Edits per turn', short: 'Edits/turn', hi: true, kind: 'ratio', tier: 'efficiency', format: (v) => v.toFixed(1) },
-  { key: 'lat', label: 'Seconds per step', short: 's/step', hi: false, kind: 'ratio', tier: 'latency', format: (v) => v.toFixed(1) },
+  { key: 'lat', label: 'Time per step', short: 'Time/step', hi: false, kind: 'ratio', tier: 'latency', format: (v) => v.toFixed(1) },
 ];
 
 export interface TierMeta {
@@ -78,7 +78,7 @@ export const TIERS: TierMeta[] = [
   {
     key: 'precision',
     label: 'Precision',
-    desc: 'Edit errors and human interventions.',
+    desc: 'Tool errors and human interventions.',
     question: 'Does it act on what it read?',
     axes: ['eerrp', 'abortp'],
     weight: 15,
@@ -124,6 +124,7 @@ export type ScoreGroup = {
   hue: number;
   hjudged: number;
   hshipped: number;
+  hshipJudged: number;
   raw: Record<AxisKey, number | null>;
   adj: Record<AxisKey, number | null>;
   ev: Record<AxisKey, number>;
@@ -150,6 +151,15 @@ export const generatedLabel =
   typeof meta.generated === 'string' && meta.generated.length >= 16
     ? `${meta.generated.slice(0, 10)} ${meta.generated.slice(11, 16)} UTC`
     : 'unknown';
+
+/** Contribution contract version stamped by `bun run pool`. Hidden in the UI if absent. */
+export const contribSchema: number | null = typeof meta.schema === 'number' ? meta.schema : null;
+
+/** Ship-judged disclosure stamped by `bun run pool`. Hidden in the UI if absent (pre-v2 pool). */
+const metaExtra = meta as typeof meta & { shipJudged?: unknown; pending?: unknown; impossible?: unknown };
+export const shipJudgedCount: number | null = typeof metaExtra.shipJudged === 'number' ? metaExtra.shipJudged : null;
+export const pendingCount: number | null = typeof metaExtra.pending === 'number' ? metaExtra.pending : null;
+export const impossibleCount: number | null = typeof metaExtra.impossible === 'number' ? metaExtra.impossible : null;
 
 export type GroupKey = 'model' | 'family';
 

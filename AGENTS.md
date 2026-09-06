@@ -11,14 +11,14 @@ Product site for Pragmatikos, the overall-score reporting tool. The visitor land
 
 ## Page order
 
-- Hero (benchmarks score models, you run setups + deck-style radar of the top family pairings) → Rankings (planner → builder pairs, Group by Model/Family, default Families, always evidence-weighted) → Join band → Why → Proof → How it works → Two records → Contribute.
+- Hero (benchmarks score models, you run setups + deck-style radar of the top family pairings) → Rankings (planner → builder pairs, Group by Model/Family, default Families, always evidence-weighted) → Join band → Why → Proof → How it works → Two records → Contribute → Contribution flow (collapsed disclosure).
 
 ## Stack
 
 - Next.js 16 (App Router), React 19, Tailwind v4 (`@tailwindcss/postcss`), Bun
 - `output: 'export'` — fully static, deployed to GitHub Pages (`.github/workflows/pages.yml`)
 - PF design system as brand DNA (square, burnt amber, Plex Sans + Inconsolata, semantic tokens); creative layer in `app/globals.css` (blueprint grids, SVG scene animations) goes beyond the console kit
-- Charts and illustrations: hand-drawn SVG (no chart library), series colors `var(--chart-1)`…`var(--chart-5)`
+- Charts and illustrations: hand-drawn SVG (no chart library), series colors `var(--chart-1)`…`var(--chart-5)`. Radar axis labels, spokes and background wedges use `--chart-2` (higher is better) and `--chart-5` (lower is better), matching the strips bands; the radar uses the strips' axis order (`STRIP_AXES`) so the greens sit together at the top, then swaps Time/step with Turns/ship.
 
 ## Conventions
 
@@ -31,18 +31,20 @@ Product site for Pragmatikos, the overall-score reporting tool. The visitor land
 
 ## Data
 
-- This site has no methodology of its own: `scripts/sample.ts` mirrors the ocProductivity deck's overall card (`OVERALL_CFG`) exactly — ten axes in six weighted tiers (Outcome 30 / Cost 20 / Precision 15 / Discipline 15 / Efficiency 10 / Latency 10), log-odds for rates, k=10 evidence weighting on a fixed ±2 span. When the deck changes, port; never invent scoring here — redirect methodology changes to ocProductivity first.
+- This site has no methodology of its own: `scripts/sample.ts` mirrors the ocInsights deck's overall card (`OVERALL_CFG`) exactly — ten axes in six weighted tiers (Outcome 30 / Cost 20 / Precision 15 / Discipline 15 / Efficiency 10 / Latency 10), log-odds for rates, k=10 evidence weighting on a fixed ±2 span. When the deck changes, port; never invent scoring here — redirect methodology changes to ocInsights first.
 - `data/pool.json` is committed and ships with the site. Refresh with `bun run update` (`pool` then `build`):
   `pool` pulls the contributions from ClickHouse (`pragma_reader` creds in gitignored `.env.local`,
-  auto-loaded by bun) and stamps `meta.generated` (ISO UTC, shown on the rankings badge) plus
-  `meta.contributors` (kept in the JSON, never displayed — the UI shows no volume counts).
+  auto-loaded by bun) and stamps `meta.generated` (ISO UTC, shown on the rankings badge),
+  `meta.schema` (contribution contract version, shown on How it works; `pool` exits if the
+  pool mixes schemas), plus `meta.contributors` (kept in the JSON, never displayed — the UI
+  shows no volume counts).
 - `data/sample.json` is gitignored local output: `bun run sample` rebuilds it from
-  `../ocProductivity/data.json` for the methodology check, and `bun run diff` compares it cell-by-cell
+  `../ocInsights/data.json` for the methodology check, and `bun run diff` compares it cell-by-cell
   against the deck's `otable` with the deck forced to relative (must pass before publishing). Both share
   the math in `scripts/lib/scoring.ts`, and with a sole-member pool the two agree to display rounding.
   Never diff `pool.json` against the deck once a second contributor lands — they legitimately diverge.
   Four views: `model`, `family`, `modelCombo`, `famCombo`.
-- Display is relative-to-pool on a fixed ±2 span, exactly as computed; `sample.json` carries the canonical values the deck diff verifies.
+- Display is relative-to-pool on a fixed ±2 span, exactly as computed; `sample.json` carries the canonical values the deck diff verifies. The radar is better-outward (the deck's Better outward toggle); the strips stay raw (right is more, green/red says which direction is better).
 - Labels use real model ids; file paths, author names, prompts and session contents must never appear — grep the JSON for `/home`, author names and `ses_` before publishing.
 - The UI shows no volume counts (no sessions/hours/repos anywhere). Only groups with ≥ 10 judged cycles (`minJudged`) are ranked or shown; pool and scores are computed over those ranked groups, matching the deck default.
 
@@ -50,7 +52,7 @@ Product site for Pragmatikos, the overall-score reporting tool. The visitor land
 
 ```bash
 bun install
-bun run sample   # rebuild data/sample.json from local ocProductivity (dev / methodology check)
+bun run sample   # rebuild data/sample.json from local ocInsights (dev / methodology check)
 bun run pool     # rebuild data/pool.json from the pooled contributions (ClickHouse, needs reader creds)
 bun run update   # pool + build: refresh the shipped data and rebuild the export
 bun run diff     # verify sample.json against the deck's otable (must pass)

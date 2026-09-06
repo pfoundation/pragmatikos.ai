@@ -5,3 +5,4 @@ out/
 .DS_Store
 .env*.local
 data/sample.json
+.playwright-mcp/

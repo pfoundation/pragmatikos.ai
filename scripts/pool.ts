@@ -37,14 +37,29 @@ async function ch(query: string): Promise<string> {
   return res.text();
 }
 
+const LIVE = 'install_id NOT IN (SELECT install_id FROM pragma.retractions)';
+const READ_SCHEMA = 2;
+
 async function main() {
-  const rows = await ch(
-    `SELECT model, prov, role, pm, pp, bm, bp, u, a, tedits, tpaths, teerr,
-      tcost, tship, thrs, tver, tabort, latmed, day
-    FROM pragma.cycles FINAL
-    WHERE install_id NOT IN (SELECT install_id FROM pragma.retractions)
-    ORDER BY day, model, prov, role FORMAT JSONEachRow`,
-  );
+  const [rows, installs, schemas] = await Promise.all([
+    ch(
+      `SELECT model, prov, role, pm, pp, bm, bp, u, a, tedits, tpaths, teerr,
+        tcost, tship, tshipe, thrs, tver, tabort, latmed, day
+      FROM pragma.cycles FINAL
+      WHERE ${LIVE}
+      ORDER BY day, model, prov, role FORMAT JSONEachRow`,
+    ),
+    ch(
+      `SELECT uniqExact(install_id) AS n FROM pragma.cycles FINAL
+      WHERE ${LIVE} FORMAT JSONEachRow`,
+    ),
+    // Fail if the pool mixes contracts or has moved off schema 2 — scoring
+    // reads tshipe, which only v2 rows carry (v1 rows would need a 0 fill).
+    ch(
+      `SELECT schema, count() AS n FROM pragma.cycles FINAL
+      WHERE ${LIVE} GROUP BY schema ORDER BY schema FORMAT JSONEachRow`,
+    ),
+  ]);
   const facts: CycleFacts[] = [];
   let dayMin = '9999';
   let dayMax = '0000';
@@ -71,6 +86,7 @@ async function main() {
       teerr: r.teerr,
       tcost: r.tcost,
       tship: r.tship,
+      tshipe: r.tshipe,
       thrs: r.thrs,
       tver: r.tver,
       tabort: r.tabort,
@@ -87,18 +103,31 @@ async function main() {
 
   let judged = 0;
   let shipped = 0;
+  let shipJudged = 0;
+  let pending = 0;
+  let impossible = 0;
   for (const f of facts) {
     if (f.pm === null || f.bm === null) continue;
     if (!isJudged(f)) continue;
     judged += 1;
+    if (f.tshipe === 0) shipJudged += 1;
+    else if (f.tshipe === 1) pending += 1;
+    else impossible += 1;
     if (f.tship) shipped += 1;
   }
 
-  const installs = await ch(
-    `SELECT uniqExact(install_id) AS n FROM pragma.cycles FINAL
-    WHERE install_id NOT IN (SELECT install_id FROM pragma.retractions) FORMAT JSONEachRow`,
-  );
   const contributors = JSON.parse(installs).n as number;
+  const schemaRows: { schema: number; n: number }[] = [];
+  for (const line of schemas.split('\n')) {
+    if (!line.trim()) continue;
+    schemaRows.push(JSON.parse(line));
+  }
+  if (schemaRows.length !== 1 || schemaRows[0].schema !== READ_SCHEMA) {
+    const got = schemaRows.map((r) => `${r.schema}×${r.n}`).join(', ') || 'none';
+    console.error(`pool: expected schema ${READ_SCHEMA} only, got ${got}`);
+    process.exit(1);
+  }
+  const schema = READ_SCHEMA;
   const out = buildOutput(
     { prod, combo },
     {
@@ -107,7 +136,11 @@ async function main() {
       end: dayMax,
       judged,
       shipped,
+      shipJudged,
+      pending,
+      impossible,
       contributors,
+      schema,
       minJudged: MIN_JUDGED,
       evidenceK: TK,
       weights: WEIGHTS,
@@ -125,7 +158,7 @@ async function main() {
   await Bun.write(OUT, JSON.stringify(out, null, 2) + '\n');
   console.log(
     `pool: ${facts.length} cycles from ${contributors} contributor(s)${prev}, generated ${out.meta.generated}, ` +
-      `model=${out.views.model.groups.length} family=${out.views.family.groups.length} ` +
+      `schema=${schema}, model=${out.views.model.groups.length} family=${out.views.family.groups.length} ` +
       `modelCombo=${out.views.modelCombo.groups.length} famCombo=${out.views.famCombo.groups.length} -> ${decodeURIComponent(OUT.pathname)}`,
   );
 }

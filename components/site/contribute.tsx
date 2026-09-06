@@ -2,120 +2,152 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Reveal, useInView } from '@/lib/reveal';
-import { ArrowUpRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Reveal } from '@/lib/reveal';
+import { ArrowUpRight, Check, Copy } from 'lucide-react';
+import { useState } from 'react';
 
-const LINES = [
-  { text: '$ git clone https://github.com/pfoundation/ocInsights.git', out: false },
-  { text: '$ cd ocInsights && make install-plugin', out: false },
-  { text: '# restart opencode, then open', out: false },
-  { text: '$ open http://127.0.0.1:4173/', out: false },
-  { text: '→ your card is ready', out: true },
-  { text: '$ make contribute-preview && make contribute', out: false },
-  { text: '→ pooled into the ranking', out: true },
-];
+const AGENT_PROMPT =
+  'Install the ocInsights plugin for OpenCode: add "@pfoundation/ocinsight" to the "plugin" list in my global opencode.json config. ' +
+  'Then tell me to restart OpenCode, and afterwards verify the plugin loaded and the insights deck answers at http://127.0.0.1:4173/. ' +
+  'Also report whether insight contribution is on, without changing that setting.';
 
-const STEPS = [
-  ['Run it locally', 'Clone ocInsights, make install-plugin, open the deck — your card is computed where the work happened.'],
-  ['Check your card', 'One number per model and per planner → builder pair.'],
-  [
-    'Share the numbers',
-    'One history is anecdote; pooled histories are evidence. Run make contribute — twenty fields per cycle, nothing else.',
-  ],
+const PLUGIN_JSON = '{ "plugin": ["@pfoundation/ocinsight"] }';
+const DECK_URL = 'http://127.0.0.1:4173/';
+
+const AFTER_AGENT = [
+  'Paste the prompt into your OpenCode agent and let it edit your config.',
+  'Restart OpenCode when it tells you to, then open the deck it verifies.',
+  'Preview with Contribute in the deck header — sharing is on by default.',
 ] as const;
 
-function Terminal() {
-  const [ref, inView] = useInView<HTMLDivElement>(0.4);
-  const [chars, setChars] = useState(0);
-  const total = LINES.reduce((t, l) => t + l.text.length + 1, 0);
-
-  useEffect(() => {
-    if (!inView) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setChars(total);
-      return;
-    }
-    const id = setInterval(() => {
-      setChars((c) => {
-        if (c >= total) {
-          clearInterval(id);
-          return c;
-        }
-        return c + 1;
-      });
-    }, 14);
-    return () => clearInterval(id);
-  }, [inView, total]);
-
-  let used = 0;
+function CopyButton ( { text, label }: { text: string; label: string; } ) {
+  const [ done, setDone ] = useState( false );
   return (
-    <div ref={ref}>
-      <Card className="bg-[var(--shell-deep)]">
-        <CardContent className="p-5">
-          <div className="mb-3 flex gap-1.5" aria-hidden>
-            <span className="bg-muted-foreground/40 inline-block size-2.5" />
-            <span className="bg-muted-foreground/40 inline-block size-2.5" />
-            <span className="bg-primary inline-block size-2.5" />
-          </div>
-          <div className="min-h-[148px] font-mono text-[13px] leading-7">
-            {LINES.map((l, i) => {
-              const start = used;
-              used += l.text.length + 1;
-              const slice = l.text.slice(0, Math.max(0, Math.min(l.text.length, chars - start)));
-              const done = chars - start >= l.text.length;
-              return (
-                <p key={i} className={l.out ? 'text-[var(--chart-2)]' : ''}>
-                  {slice}
-                  {!done && chars - start >= 0 && <span className="caret-blink">▍</span>}
-                </p>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    <Button
+      variant="outline"
+      size="sm"
+      aria-label={ `Copy ${ label }` }
+      onClick={ async () => {
+        try
+        {
+          await navigator.clipboard.writeText( text );
+        } catch
+        {
+          const ta = document.createElement( 'textarea' );
+          ta.value = text;
+          document.body.appendChild( ta );
+          ta.select();
+          document.execCommand( 'copy' );
+          ta.remove();
+        }
+        setDone( true );
+        setTimeout( () => setDone( false ), 1500 );
+      } }
+    >
+      { done ? <Check /> : <Copy /> }
+      { done ? 'Copied' : 'Copy' }
+    </Button>
   );
 }
 
-export function Contribute() {
+export function Contribute () {
   return (
     <section id="contribute" className="bg-blueprint scroll-mt-12">
-      <div className="mx-auto grid max-w-6xl items-start gap-10 px-6 py-16 md:grid-cols-2">
+      <div className="mx-auto max-w-6xl px-6 py-16">
         <Reveal>
           <p className="font-mono text-xs text-primary">contribute</p>
-          <h2 className="mt-1 text-2xl font-semibold tracking-tight md:text-3xl">Make the ranking yours to trust</h2>
-          <ol className="mt-6 space-y-5">
-            {STEPS.map(([title, body], i) => (
-              <li key={title} className="flex gap-4">
-                <span className="font-mono text-2xl font-semibold text-primary">{i + 1}</span>
-                <div>
-                  <p className="font-semibold">{title}</p>
-                  <p className="text-muted-foreground mt-1 text-sm leading-relaxed">{body}</p>
+          <h2 className="mt-1 text-2xl font-semibold tracking-tight md:text-3xl">Add your sessions in two minutes</h2>
+          <p className="text-muted-foreground mt-2 font-mono text-xs">For OpenCode v2 — other coding agents coming soon.</p>
+        </Reveal>
+        <Tabs defaultValue="agent" className="mt-6">
+          <TabsList aria-label="Install method">
+            <TabsTrigger value="agent">Ask your agent</TabsTrigger>
+            <TabsTrigger value="manual">Manual install</TabsTrigger>
+          </TabsList>
+          <TabsContent value="agent">
+            <Card className="bg-[var(--shell-deep)] max-w-3xl">
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <p className="font-mono text-[13px] leading-7">{ AGENT_PROMPT }</p>
+                  <CopyButton text={ AGENT_PROMPT } label="agent prompt" />
+                </div>
+              </CardContent>
+            </Card>
+            <ol className="mt-6 max-w-3xl space-y-4">
+              { AFTER_AGENT.map( ( body, i ) => (
+                <li key={ body } className="flex gap-4">
+                  <span className="font-mono text-2xl font-semibold text-primary">{ i + 1 }</span>
+                  <p className="text-muted-foreground mt-1 text-sm leading-relaxed">{ body }</p>
+                </li>
+              ) ) }
+            </ol>
+          </TabsContent>
+          <TabsContent value="manual">
+            <ol className="max-w-3xl space-y-5">
+              <li className="flex gap-4">
+                <span className="font-mono text-2xl font-semibold text-primary">1</span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold">Add the plugin to your global config</p>
+                  <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+                    In <span className="font-mono text-[13px]">~/.config/opencode/opencode.json</span>, merged into the{ ' ' }
+                    <span className="font-mono text-[13px]">plugin</span> list if you already have one:
+                  </p>
+                  <Card className="bg-[var(--shell-deep)] mt-3">
+                    <CardContent className="flex items-center justify-between gap-4 p-4">
+                      <code className="font-mono text-[13px] break-all">{ PLUGIN_JSON }</code>
+                      <CopyButton text={ PLUGIN_JSON } label="plugin snippet" />
+                    </CardContent>
+                  </Card>
                 </div>
               </li>
-            ))}
-          </ol>
-          <div className="mt-7 flex flex-wrap gap-3">
-            <Button asChild>
-              <a href="https://github.com/pfoundation/ocInsights#contributing-your-data" target="_blank" rel="noreferrer">
-                Share your numbers
-                <ArrowUpRight />
-              </a>
-            </Button>
-            <Button variant="outline" asChild>
-              <a href="https://github.com/pfoundation/ocInsights" target="_blank" rel="noreferrer">
-                ocInsights on GitHub
-                <ArrowUpRight />
-              </a>
-            </Button>
-          </div>
-          <p className="text-muted-foreground mt-4 text-sm leading-relaxed">
-            Twenty fields per cycle — day, models, turns, edits, cost, shipping. No paths, prompts, session ids or projects. Preview with
-            make contribute-preview before anything leaves your machine.
-          </p>
-        </Reveal>
-        <Terminal />
+              <li className="flex gap-4">
+                <span className="font-mono text-2xl font-semibold text-primary">2</span>
+                <div>
+                  <p className="font-semibold">Restart OpenCode</p>
+                  <p className="text-muted-foreground mt-1 text-sm leading-relaxed">The plugin loads on startup.</p>
+                </div>
+              </li>
+              <li className="flex gap-4">
+                <span className="font-mono text-2xl font-semibold text-primary">3</span>
+                <div>
+                  <p className="font-semibold">Open your deck</p>
+                  <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+                    <span className="font-mono text-[13px]">{ DECK_URL }</span> — first load runs extract, about fifteen seconds.
+                  </p>
+                </div>
+              </li>
+              <li className="flex gap-4">
+                <span className="font-mono text-2xl font-semibold text-primary">4</span>
+                <div>
+                  <p className="font-semibold">Preview, then share</p>
+                  <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+                    Preview with Contribute in the deck header. Sharing is on by default — your plugin sends new cycles on its own.{ ' ' }
+                    <span className="font-mono text-[13px]">/contribute</span> in the TUI to change it.
+                  </p>
+                </div>
+              </li>
+            </ol>
+          </TabsContent>
+        </Tabs>
+        <p className="text-muted-foreground mt-8 max-w-3xl text-sm leading-relaxed">
+          Twenty fields per cycle — day, models, turns, edits, cost, shipping. No paths, prompts, session ids or projects. Preview in the
+          deck&apos;s Contribute panel before anything leaves your machine.
+        </p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Button asChild>
+            <a href="https://github.com/pfoundation/ocInsights#contributing-your-data" target="_blank" rel="noreferrer">
+              Share your numbers
+              <ArrowUpRight />
+            </a>
+          </Button>
+          <Button variant="outline" asChild>
+            <a href="https://github.com/pfoundation/ocInsights" target="_blank" rel="noreferrer">
+              ocInsights on GitHub
+              <ArrowUpRight />
+            </a>
+          </Button>
+        </div>
       </div>
     </section>
   );
