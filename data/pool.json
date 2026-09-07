@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generated": "2026-09-07T14:07:08Z",
+    "generated": "2026-09-07T14:55:23Z",
     "start": "2026-01-16",
     "end": "2026-09-07",
     "judged": 1210,
@@ -8,7 +8,7 @@
     "shipJudged": 1056,
     "pending": 56,
     "impossible": 98,
-    "contributors": 1,
+    "contributors": 2,
     "schema": 3,
     "minJudged": 10,
     "evidenceK": 10,

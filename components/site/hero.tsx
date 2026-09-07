@@ -13,8 +13,7 @@ export function Hero () {
           </h1>
           <p className="text-muted-foreground mt-4 max-w-2xl text-sm leading-relaxed md:text-base">
             A benchmark is an exam: a clean task, a hidden answer key, one model, nobody steering. Real work is the job: a messy repo, your
-            tools, your steering, and increasingly one model planning while another builds. Pragmatikos scores the job, not the exam: every
-            model and every planner → builder pairing, on real sessions, by what actually shipped.
+            tools, your steering, and increasingly one model planning while another builds. <b>Pragmatikos scores the job, not the exam</b>: every planner → builder pairing, on real sessions, by what actually shipped.
           </p>
           <p className="text-muted-foreground mt-3 font-mono text-xs">Rankings below are pooled from real developer sessions.</p>
           <div className="mt-6 flex flex-wrap items-center gap-4">
