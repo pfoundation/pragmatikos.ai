@@ -8,11 +8,11 @@ import { ArrowUpRight, Check, Copy } from 'lucide-react';
 import { useState } from 'react';
 
 const AGENT_PROMPT =
-  'Install the ocInsights plugin for OpenCode: add "@pfoundation/ocinsight" to the "plugin" list in my global opencode.json config. ' +
+  'Install the ocInsights plugin for OpenCode: add "@pfoundation/ocinsights" to the "plugin" list in my global opencode.json config. ' +
   'Then tell me to restart OpenCode, and afterwards verify the plugin loaded and the insights deck answers at http://127.0.0.1:4173/. ' +
   'Also report whether insight contribution is on, without changing that setting.';
 
-const PLUGIN_JSON = '{ "plugin": ["@pfoundation/ocinsight"] }';
+const PLUGIN_JSON = '{ "plugin": ["@pfoundation/ocinsights"] }';
 const DECK_URL = 'http://127.0.0.1:4173/';
 
 const AFTER_AGENT = [
