@@ -141,7 +141,7 @@ export type ScoreView = {
   span: number;
 };
 
-export type ViewKey = 'model' | 'family' | 'modelCombo' | 'famCombo';
+export type ViewKey = 'model' | 'family' | 'modelEffort' | 'modelCombo' | 'famCombo';
 
 export const views = pool.views as unknown as Record<ViewKey, ScoreView>;
 export const meta = pool.meta;
@@ -161,11 +161,19 @@ export const shipJudgedCount: number | null = typeof metaExtra.shipJudged === 'n
 export const pendingCount: number | null = typeof metaExtra.pending === 'number' ? metaExtra.pending : null;
 export const impossibleCount: number | null = typeof metaExtra.impossible === 'number' ? metaExtra.impossible : null;
 
-export type GroupKey = 'model' | 'family';
+export type GroupKey = 'model' | 'family' | 'effort';
 
 export const GROUP_LABELS: Record<GroupKey, string> = {
   model: 'Models',
   family: 'Families',
+  effort: 'Model + effort',
+};
+
+/** Scorecard tab → pool view. Guarded at render: a stale pool.json may lack newer views. */
+export const VIEW_FOR_GROUP: Record<GroupKey, ViewKey> = {
+  model: 'modelCombo',
+  family: 'famCombo',
+  effort: 'modelEffort',
 };
 
 const intFmt = new Intl.NumberFormat('en-US');

@@ -43,7 +43,9 @@ Product site for Pragmatikos, the overall-score reporting tool. The visitor land
   against the deck's `otable` with the deck forced to relative (must pass before publishing). Both share
   the math in `scripts/lib/scoring.ts`, and with a sole-member pool the two agree to display rounding.
   Never diff `pool.json` against the deck once a second contributor lands — they legitimately diverge.
-  Four views: `model`, `family`, `modelCombo`, `famCombo`.
+  Five views: `model`, `family`, `modelEffort` (model × effort, mirrors the deck's effort grouping with role off), `modelCombo`, `famCombo`.
+  `meta.off` carries the off-view counts (all judged cycles, no both-phases requirement) so `diff` can gate the effort view too.
+  The scorecard hides tabs whose view a stale `pool.json` lacks (`VIEW_FOR_GROUP` guard) — after a contract bump the Effort tab appears on the next `bun run pool`.
 - Display is relative-to-pool on a fixed ±2 span, exactly as computed; `sample.json` carries the canonical values the deck diff verifies. The radar is better-outward (the deck's Better outward toggle); the strips stay raw (right is more, green/red says which direction is better).
 - Labels use real model ids; file paths, author names, prompts and session contents must never appear — grep the JSON for `/home`, author names and `ses_` before publishing.
 - The UI shows no volume counts (no sessions/hours/repos anywhere). Only groups with ≥ 10 judged cycles (`minJudged`) are ranked or shown; pool and scores are computed over those ranked groups, matching the deck default.

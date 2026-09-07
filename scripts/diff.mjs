@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// Cell-by-cell diff: pragma data/sample.json (famCombo view) vs the
-// ocInsights deck's #otable at deck defaults (family, planner→builder
-// combos, weighted, all time, small filter off) — the exact configuration
-// scripts/sample.ts mirrors. Usage: bun scripts/diff.mjs
+// Cell-by-cell diff: pragma data/sample.json vs the ocInsights deck's #otable
+// at two configurations scripts/sample.ts mirrors: famCombo at deck defaults
+// (family, planner→builder combos, weighted, all time, small filter off) and
+// modelEffort (model + effort grouping, role off). Usage: bun scripts/diff.mjs
 // Fails loudly on any cell outside display-rounding tolerance.
 import path from 'node:path';
 import { readFileSync } from 'node:fs';
@@ -51,57 +51,67 @@ const COLS = [
   ['lat', 19, 0.06],
 ];
 const num = (t) => (t === '—' ? null : parseFloat(t.replace(/[$%*]/g, '')));
-const rows = await page.locator('#otb tr:not([data-unr])').evaluateAll((rs) => rs.map((r) => [...r.children].map((td) => td.innerText)));
-const deckByLabel = new Map(rows.map((r) => [r[0], r]));
-const sampGroups = sample.views.famCombo.groups;
 
-check('same group count', rows.length === sampGroups.length, `deck ${rows.length}, sample ${sampGroups.length}`);
-for (const g of sampGroups) {
-  const r = deckByLabel.get(g.label);
-  check(`group present: ${g.label}`, !!r);
-  if (!r) continue;
-  const want = {
-    judged: g.hjudged,
-    overall: g.scoreAdj,
-    Outcome: g.tiersAdj.Outcome,
-    Cost: g.tiersAdj.Cost,
-    Precision: g.tiersAdj.Precision,
-    Discipline: g.tiersAdj.Discipline,
-    Efficiency: g.tiersAdj.Efficiency,
-    Latency: g.tiersAdj.Latency,
-    ...g.adj,
-  };
-  for (const [k, i, tol] of COLS) {
-    const d = num(r[i]);
-    const s = want[k];
-    const bothNull = (d === null || Number.isNaN(d)) && s === null;
-    const ok = bothNull || (d !== null && !Number.isNaN(d) && s !== null && Math.abs(d - s) <= tol);
-    check(`${g.label} :: ${k}`, ok, `deck ${r[i]}, sample ${s}`);
+async function checkView(tag, sampGroups, wantMeta) {
+  const rows = await page.locator('#otb tr:not([data-unr])').evaluateAll((rs) => rs.map((r) => [...r.children].map((td) => td.innerText)));
+  const deckByLabel = new Map(rows.map((r) => [r[0], r]));
+  check(`${tag}: same group count`, rows.length === sampGroups.length, `deck ${rows.length}, sample ${sampGroups.length}`);
+  for (const g of sampGroups) {
+    const r = deckByLabel.get(g.label);
+    check(`${tag}: group present: ${g.label}`, !!r);
+    if (!r) continue;
+    const want = {
+      judged: g.hjudged,
+      overall: g.scoreAdj,
+      Outcome: g.tiersAdj.Outcome,
+      Cost: g.tiersAdj.Cost,
+      Precision: g.tiersAdj.Precision,
+      Discipline: g.tiersAdj.Discipline,
+      Efficiency: g.tiersAdj.Efficiency,
+      Latency: g.tiersAdj.Latency,
+      ...g.adj,
+    };
+    for (const [k, i, tol] of COLS) {
+      const d = num(r[i]);
+      const s = want[k];
+      const bothNull = (d === null || Number.isNaN(d)) && s === null;
+      const ok = bothNull || (d !== null && !Number.isNaN(d) && s !== null && Math.abs(d - s) <= tol);
+      check(`${tag}: ${g.label} :: ${k}`, ok, `deck ${r[i]}, sample ${s}`);
+    }
+    const deckStarred = ['Outcome', 'Cost', 'Precision', 'Discipline', 'Efficiency', 'Latency']
+      .filter((_, ti) => r[4 + ti].includes('*'))
+      .sort()
+      .join(',');
+    check(`${tag}: ${g.label} :: imputed flags`, deckStarred === [...g.imputed].sort().join(','), `deck [${deckStarred}], sample [${g.imputed}]`);
   }
-  const deckStarred = ['Outcome', 'Cost', 'Precision', 'Discipline', 'Efficiency', 'Latency']
-    .filter((_, ti) => r[4 + ti].includes('*'))
-    .sort()
-    .join(',');
-  check(`${g.label} :: imputed flags`, deckStarred === [...g.imputed].sort().join(','), `deck [${deckStarred}], sample [${g.imputed}]`);
+
+  // meta totals vs the deck summary line
+  const osum = await page.locator('#osum').innerText();
+  const m = osum.match(/([\d,]+) judged cycles.*?([\d,]+) ship-judged \((\d+) pending, (\d+) unshippable\) .*→ ([\d,]+) shipped/);
+  check(
+    `${tag}: meta judged/ship-judged/shipped`,
+    !!m &&
+      +m[1].replace(/,/g, '') === wantMeta.judged &&
+      +m[2].replace(/,/g, '') === wantMeta.shipJudged &&
+      +m[3] === wantMeta.pending &&
+      +m[4] === wantMeta.impossible &&
+      +m[5].replace(/,/g, '') === wantMeta.shipped,
+    osum.slice(0, 180),
+  );
+  return sampGroups.length;
 }
 
-// meta totals vs the deck summary line
-const osum = await page.locator('#osum').innerText();
-const m = osum.match(/([\d,]+) judged cycles.*?([\d,]+) ship-judged \((\d+) pending, (\d+) unshippable\) .*→ ([\d,]+) shipped/);
-check(
-  'meta judged/ship-judged/shipped',
-  !!m &&
-    +m[1].replace(/,/g, '') === sample.meta.judged &&
-    +m[2].replace(/,/g, '') === sample.meta.shipJudged &&
-    +m[3] === sample.meta.pending &&
-    +m[4] === sample.meta.impossible &&
-    +m[5].replace(/,/g, '') === sample.meta.shipped,
-  osum.slice(0, 180),
-);
+const n1 = await checkView('famCombo', sample.views.famCombo.groups, sample.meta);
+// Effort view: model + effort grouping with role off (per-session grouping,
+// the configuration sample.modelEffort mirrors).
+await page.locator('#ogroup [data-g=effort]').click();
+await page.locator('#orole [data-r=off]').click();
+await page.waitForTimeout(300);
+const n2 = await checkView('modelEffort', sample.views.modelEffort.groups, sample.meta.off);
 
 await browser.close();
 if (fails.length) {
   console.log(`DIFF FAIL:\n${fails.map((f) => '  - ' + f).join('\n')}`);
   process.exit(1);
 }
-console.log(`diff: ${sampGroups.length} groups × ${COLS.length} cells match, imputed flags agree, meta agrees`);
+console.log(`diff: famCombo ${n1} + modelEffort ${n2} groups × ${COLS.length} cells match, imputed flags agree, meta agrees`);

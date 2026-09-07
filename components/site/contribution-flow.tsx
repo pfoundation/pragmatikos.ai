@@ -39,8 +39,8 @@ const FACTS = [
 
 const STAGES = [
   { label: 'Your sessions', hint: 'local record' },
-  { label: '20 fields', hint: 'one row / cycle' },
-  { label: 'POST /v1/contribute', hint: contribSchema !== null ? `schema v${contribSchema}` : 'the 20 fields' },
+  { label: '25 fields', hint: 'one row / cycle' },
+  { label: 'POST /v1/contribute', hint: contribSchema !== null ? `schema v${contribSchema}` : 'the 25 fields' },
   { label: 'The pool', hint: 'dedup' },
   { label: 'This page', hint: 'pairings ranked' },
 ] as const;
@@ -59,7 +59,7 @@ function Pipeline() {
         viewBox="0 0 1100 160"
         className={`anim mt-6 hidden h-auto w-full md:block ${inView ? 'play' : ''}`}
         role="img"
-        aria-label="Contribution path: your sessions, twenty fields per cycle, POST /v1/contribute, the pool, this page"
+        aria-label="Contribution path: your sessions, twenty-five fields per cycle, POST /v1/contribute, the pool, this page"
       >
         {STAGES.map((s, i) => {
           const x = XS[i];
@@ -168,7 +168,8 @@ export function ContributionFlow() {
                 From your machine to this page
               </h2>
               <p className="text-muted-foreground mt-2 max-w-3xl text-sm leading-relaxed">
-                The plugin reads your local sessions and sends twenty fields per cycle. This page only ranks the pool.
+                The plugin reads your local sessions and sends twenty-five fields per cycle: day, models, effort, harness, turns, edits,
+                cost, shipping. This page only ranks the pool.
               </p>
             </Reveal>
             <Pipeline />

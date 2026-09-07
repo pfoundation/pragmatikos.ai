@@ -38,13 +38,13 @@ async function ch(query: string): Promise<string> {
 }
 
 const LIVE = 'install_id NOT IN (SELECT install_id FROM pragma.retractions)';
-const READ_SCHEMA = 2;
+const READ_SCHEMA = 3;
 
 async function main() {
   const [rows, installs, schemas] = await Promise.all([
     ch(
-      `SELECT model, prov, role, pm, pp, bm, bp, u, a, tedits, tpaths, teerr,
-        tcost, tship, tshipe, thrs, tver, tabort, latmed, day
+      `SELECT model, prov, variant, role, pm, pp, pv, bm, bp, bv, harness, hversion,
+        u, a, tedits, tpaths, teerr, tcost, tship, tshipe, thrs, tver, tabort, latmed, day
       FROM pragma.cycles FINAL
       WHERE ${LIVE}
       ORDER BY day, model, prov, role FORMAT JSONEachRow`,
@@ -53,8 +53,8 @@ async function main() {
       `SELECT uniqExact(install_id) AS n FROM pragma.cycles FINAL
       WHERE ${LIVE} FORMAT JSONEachRow`,
     ),
-    // Fail if the pool mixes contracts or has moved off schema 2 — scoring
-    // reads tshipe, which only v2 rows carry (v1 rows would need a 0 fill).
+    // Fail if the pool mixes contracts or has moved off schema 3 — scoring
+    // reads variant/harness, which only v3 rows carry.
     ch(
       `SELECT schema, count() AS n FROM pragma.cycles FINAL
       WHERE ${LIVE} GROUP BY schema ORDER BY schema FORMAT JSONEachRow`,
@@ -73,12 +73,16 @@ async function main() {
     facts.push({
       model: r.model,
       prov: r.prov,
+      variant: (r.variant as string) || '(none)',
       isBuild: r.role === 2,
       top: true,
       pm,
       pp: pm ? (r.pp as string) : null,
+      pv: pm ? (r.pv as string) || '(none)' : null,
       bm,
       bp: bm ? (r.bp as string) : null,
+      bv: bm ? (r.bv as string) || '(none)' : null,
+      hversion: r.hversion,
       u: r.u,
       a: r.a,
       tedits: r.tedits,
@@ -101,20 +105,25 @@ async function main() {
   }
   const { prod, combo } = accumulate(facts);
 
-  let judged = 0;
-  let shipped = 0;
-  let shipJudged = 0;
-  let pending = 0;
-  let impossible = 0;
-  for (const f of facts) {
-    if (f.pm === null || f.bm === null) continue;
-    if (!isJudged(f)) continue;
-    judged += 1;
-    if (f.tshipe === 0) shipJudged += 1;
-    else if (f.tshipe === 1) pending += 1;
-    else impossible += 1;
-    if (f.tship) shipped += 1;
-  }
+  const tally = (needPhases: boolean) => {
+    let judged = 0;
+    let shipped = 0;
+    let shipJudged = 0;
+    let pending = 0;
+    let impossible = 0;
+    for (const f of facts) {
+      if (needPhases && (f.pm === null || f.bm === null)) continue;
+      if (!isJudged(f)) continue;
+      judged += 1;
+      if (f.tshipe === 0) shipJudged += 1;
+      else if (f.tshipe === 1) pending += 1;
+      else impossible += 1;
+      if (f.tship) shipped += 1;
+    }
+    return { judged, shipped, shipJudged, pending, impossible };
+  };
+  const meta = tally(true);
+  const off = tally(false);
 
   const contributors = JSON.parse(installs).n as number;
   const schemaRows: { schema: number; n: number }[] = [];
@@ -134,11 +143,8 @@ async function main() {
       generated: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
       start: dayMin,
       end: dayMax,
-      judged,
-      shipped,
-      shipJudged,
-      pending,
-      impossible,
+      ...meta,
+      off,
       contributors,
       schema,
       minJudged: MIN_JUDGED,
@@ -159,7 +165,7 @@ async function main() {
   console.log(
     `pool: ${facts.length} cycles from ${contributors} contributor(s)${prev}, generated ${out.meta.generated}, ` +
       `schema=${schema}, model=${out.views.model.groups.length} family=${out.views.family.groups.length} ` +
-      `modelCombo=${out.views.modelCombo.groups.length} famCombo=${out.views.famCombo.groups.length} -> ${decodeURIComponent(OUT.pathname)}`,
+      `modelEffort=${out.views.modelEffort.groups.length} modelCombo=${out.views.modelCombo.groups.length} famCombo=${out.views.famCombo.groups.length} -> ${decodeURIComponent(OUT.pathname)}`,
   );
 }
 

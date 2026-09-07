@@ -189,12 +189,16 @@ const NUMKEYS = [
 export type CycleFacts = {
   model: string;
   prov: string;
+  variant: string;
   isBuild: boolean;
   top: boolean;
   pm: string | null;
   pp: string | null;
+  pv: string | null;
   bm: string | null;
   bp: string | null;
+  bv: string | null;
+  hversion: string;
   u: number;
   a: number;
   tedits: number;
@@ -209,7 +213,7 @@ export type CycleFacts = {
   latmed: number;
 };
 
-export type ProdRow = Acc & { m: string; p: string };
+export type ProdRow = Acc & { m: string; p: string; v: string };
 export type ComboRow = Acc & { pm: string; bm: string };
 
 export function isJudged(f: CycleFacts): boolean {
@@ -239,7 +243,7 @@ function addCycle(e: Acc, f: CycleFacts): void {
   }
 }
 
-// Level 1 (off): h* sums keyed by the parent session's model|prov|isBuild.
+// Level 1 (off): h* sums keyed by the parent session's model|prov|variant|isBuild.
 // Level 1 (combo): h* sums keyed by the cycle's own planner→builder pair;
 // cycles need both phases.
 export function accumulate(rows: Iterable<CycleFacts>): {
@@ -250,15 +254,15 @@ export function accumulate(rows: Iterable<CycleFacts>): {
   const combo = new Map<string, ComboRow>();
   for (const f of rows) {
     if (!isJudged(f)) continue;
-    const k = `${f.model}|${f.prov}|${f.isBuild ? 1 : 0}`;
+    const k = `${f.model}|${f.prov}|${f.variant}|${f.isBuild ? 1 : 0}`;
     let e = prod.get(k);
     if (!e) {
-      e = { ...blank(), latBag: [] as [number, number][], m: f.model, p: f.prov };
+      e = { ...blank(), latBag: [] as [number, number][], m: f.model, p: f.prov, v: f.variant };
       prod.set(k, e);
     }
     addCycle(e, f);
     if (f.pm === null || f.bm === null) continue;
-    const ck = `${f.pm}|${f.pp}|${f.bm}|${f.bp}`;
+    const ck = `${f.pm}|${f.pp}|${f.pv}|${f.bm}|${f.bp}|${f.bv}`;
     let c = combo.get(ck);
     if (!c) {
       c = { ...blank(), latBag: [] as [number, number][], pm: f.pm, bm: f.bm };
@@ -430,6 +434,8 @@ export type SampleMeta = {
   minJudged: number;
   evidenceK: number;
   weights: string;
+  /** Same counts over all judged cycles (no both-phases requirement), for the off-view diff. */
+  off?: { judged: number; shipped: number; shipJudged: number; pending: number; impossible: number };
 };
 
 export function buildOutput(input: ViewInput, meta: SampleMeta) {
@@ -441,6 +447,10 @@ export function buildOutput(input: ViewInput, meta: SampleMeta) {
     const f = familyOf(r.m);
     return { key: f, hue: hueOf(f) };
   });
+  const effortGroups = groupUp(input.prod.values(), (r) => ({
+    key: `${r.m} (${r.v})`,
+    hue: hueOf(familyOf(r.m)),
+  }));
   const comboGroups = groupUp(input.combo.values(), (r) => ({
     key: `${r.pm}→${r.bm}`,
     hue: hueOf(familyOf(r.bm)),
@@ -454,6 +464,7 @@ export function buildOutput(input: ViewInput, meta: SampleMeta) {
     views: {
       model: finish(modelGroups, (k) => k),
       family: finish(famGroups, (k) => k),
+      modelEffort: finish(effortGroups, (k) => k),
       modelCombo: finish(comboGroups, (k) => k.split('→').join(' → ')),
       famCombo: finish(famComboGroups, (k) => k.split('→').join(' → ')),
     },

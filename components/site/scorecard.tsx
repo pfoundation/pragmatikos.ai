@@ -12,6 +12,7 @@ import {
   SPAN,
   STRIP_AXES,
   TIERS,
+  VIEW_FOR_GROUP,
   famFill,
   fmtInt,
   generatedLabel,
@@ -284,7 +285,7 @@ export function Scorecard() {
   const [hot, setHot] = useState<string | null>(null);
   const [sel, setSel] = useState<string | null>(null);
   const [arith, setArith] = useState(false);
-  const viewKey: ViewKey = group === 'model' ? 'modelCombo' : 'famCombo';
+  const viewKey: ViewKey = VIEW_FOR_GROUP[group];
   const view = views[viewKey];
   const [, setSharedHot] = useSharedHot();
   const setHotBoth = (id: string | null): void => {
@@ -353,11 +354,13 @@ export function Scorecard() {
                   }}
                 >
                   <TabsList>
-                    {(Object.keys(GROUP_LABELS) as GroupKey[]).map((k) => (
-                      <TabsTrigger key={k} value={k}>
-                        {GROUP_LABELS[k]}
-                      </TabsTrigger>
-                    ))}
+                    {(Object.keys(GROUP_LABELS) as GroupKey[])
+                      .filter((k) => views[VIEW_FOR_GROUP[k]])
+                      .map((k) => (
+                        <TabsTrigger key={k} value={k}>
+                          {GROUP_LABELS[k]}
+                        </TabsTrigger>
+                      ))}
                   </TabsList>
                 </Tabs>
               </div>
