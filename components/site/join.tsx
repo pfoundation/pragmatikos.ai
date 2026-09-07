@@ -18,6 +18,9 @@ export function Join() {
             <a href="#anatomy" className="text-sm underline underline-offset-4 hover:opacity-80">
               How the score works →
             </a>
+            <a href="#caveats" className="text-sm underline underline-offset-4 hover:opacity-80">
+              Where it falls short →
+            </a>
           </div>
         </Reveal>
       </div>

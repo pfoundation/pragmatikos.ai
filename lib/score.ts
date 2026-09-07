@@ -156,10 +156,30 @@ export const generatedLabel =
 export const contribSchema: number | null = typeof meta.schema === 'number' ? meta.schema : null;
 
 /** Ship-judged disclosure stamped by `bun run pool`. Hidden in the UI if absent (pre-v2 pool). */
-const metaExtra = meta as typeof meta & { shipJudged?: unknown; pending?: unknown; impossible?: unknown };
+const metaExtra = meta as typeof meta & {
+  shipJudged?: unknown;
+  pending?: unknown;
+  impossible?: unknown;
+  contributors?: unknown;
+  minJudged?: unknown;
+};
 export const shipJudgedCount: number | null = typeof metaExtra.shipJudged === 'number' ? metaExtra.shipJudged : null;
 export const pendingCount: number | null = typeof metaExtra.pending === 'number' ? metaExtra.pending : null;
 export const impossibleCount: number | null = typeof metaExtra.impossible === 'number' ? metaExtra.impossible : null;
+
+/** Contributor count stamped by `bun run pool`. Hidden in the UI if absent (pre-v3 pool). */
+export const contributorCount: number | null = typeof metaExtra.contributors === 'number' ? metaExtra.contributors : null;
+
+/** Ranked family pairings and the largest pairing's share of judged cycles, for the Caveats section. */
+const rankedFamPairs = (views.famCombo?.groups ?? []).filter(
+  (g) => g.hjudged >= (typeof metaExtra.minJudged === 'number' ? metaExtra.minJudged : 10),
+);
+export const rankedFamPairCount: number = rankedFamPairs.length;
+const topFamJudged = rankedFamPairs.reduce((m, g) => Math.max(m, g.hjudged), 0);
+export const topFamPairShare: number | null =
+  typeof meta.judged === 'number' && meta.judged > 0 && topFamJudged > 0 ? Math.round((100 * topFamJudged) / meta.judged) : null;
+
+export const plural = (n: number, one: string, many: string): string => (n === 1 ? one : many);
 
 export type GroupKey = 'model' | 'family' | 'effort';
 

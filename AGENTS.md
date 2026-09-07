@@ -8,10 +8,11 @@ Product site for Pragmatikos, the overall-score reporting tool. The visitor land
 - The pitch is two ideas: benchmarks measure a different thing than real work, and real setups are planner → builder pairs, not single models.
 - "Ship" is the outcome word: the AI's work landed in a git commit. Define it once per surface, never assume it.
 - Marketing sections sell the answer (which setups ship), never the method. Technical detail (axes, tiers, log scale, evidence weighting) is confined to How it works.
+- Caveats names the scoring's limits plainly (observational, small, self-selected) and never names a specific methodology change — that decision belongs to ocInsights.
 
 ## Page order
 
-- Hero (benchmarks score models, you run setups + deck-style radar of the top family pairings) → Rankings (planner → builder pairs, Group by Model/Family, default Families, always evidence-weighted) → Join band → Why → Proof → How it works → Two records → Contribute → Contribution flow (collapsed disclosure).
+- Hero (benchmarks score models, you run setups + deck-style radar of the top family pairings) → Rankings (planner → builder pairs, Group by Model/Family, default Families, always evidence-weighted) → Join band → Why → Proof → How it works → Two records → Caveats (where the scoring falls short) → Contribute → Contribution flow (collapsed disclosure).
 
 ## Stack
 
@@ -36,8 +37,7 @@ Product site for Pragmatikos, the overall-score reporting tool. The visitor land
   `pool` pulls the contributions from ClickHouse (`pragma_reader` creds in gitignored `.env.local`,
   auto-loaded by bun) and stamps `meta.generated` (ISO UTC, shown on the rankings badge),
   `meta.schema` (contribution contract version, shown on How it works; `pool` exits if the
-  pool mixes schemas), plus `meta.contributors` (kept in the JSON, never displayed — the UI
-  shows no volume counts).
+  pool mixes schemas), plus `meta.contributors` (shown on the rankings header and in Caveats).
 - `data/sample.json` is gitignored local output: `bun run sample` rebuilds it from
   `../ocInsights/data.json` for the methodology check, and `bun run diff` compares it cell-by-cell
   against the deck's `otable` with the deck forced to relative (must pass before publishing). Both share
@@ -48,7 +48,7 @@ Product site for Pragmatikos, the overall-score reporting tool. The visitor land
   The scorecard hides tabs whose view a stale `pool.json` lacks (`VIEW_FOR_GROUP` guard) — after a contract bump the Effort tab appears on the next `bun run pool`.
 - Display is relative-to-pool on a fixed ±2 span, exactly as computed; `sample.json` carries the canonical values the deck diff verifies. The radar is better-outward (the deck's Better outward toggle); the strips stay raw (right is more, green/red says which direction is better).
 - Labels use real model ids; file paths, author names, prompts and session contents must never appear — grep the JSON for `/home`, author names and `ses_` before publishing.
-- The UI shows no volume counts (no sessions/hours/repos anywhere). Only groups with ≥ 10 judged cycles (`minJudged`) are ranked or shown; pool and scores are computed over those ranked groups, matching the deck default.
+- The UI shows no per-group volume counts (no sessions/hours/repos anywhere on the ranked rows). Pool-level counts — judged cycles and contributors on the rankings header, pool size and skew in Caveats — are the only exceptions. Only groups with ≥ 10 judged cycles (`minJudged`) are ranked or shown; pool and scores are computed over those ranked groups, matching the deck default.
 
 ## Commands
 

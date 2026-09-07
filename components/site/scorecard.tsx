@@ -13,12 +13,14 @@ import {
   STRIP_AXES,
   TIERS,
   VIEW_FOR_GROUP,
+  contributorCount,
   famFill,
   fmtInt,
   generatedLabel,
   impossibleCount,
   meta,
   pendingCount,
+  plural,
   position,
   shipJudgedCount,
   tierOf,
@@ -325,6 +327,12 @@ export function Scorecard() {
                 className="group relative mt-1 ml-auto w-fit cursor-help font-mono text-xs text-muted-foreground underline decoration-dotted underline-offset-4"
               >
                 {fmtInt(meta.judged)} Cycles<sup>*</sup>
+                {contributorCount !== null && (
+                  <>
+                    {' '}
+                    · {contributorCount} {plural(contributorCount, 'contributor', 'contributors')}
+                  </>
+                )}
                 <span className="absolute top-full right-0 z-30 mt-2 hidden w-64 border border-border bg-popover p-3 text-left font-sans text-xs font-normal leading-snug text-popover-foreground no-underline group-focus:block group-hover:block">
                   Each cycle is one plan phase plus the build that followed it: the planner and builder models behind it, with turns, edits,
                   cost and shipping.
@@ -333,6 +341,12 @@ export function Scorecard() {
                       {' '}
                       Of these, {fmtInt(shipJudgedCount)} are ship-judged ({fmtInt(pendingCount)} pending, {fmtInt(impossibleCount)}{' '}
                       unshippable).
+                    </>
+                  )}
+                  {contributorCount !== null && (
+                    <>
+                      {' '}
+                      Shared by {contributorCount} {plural(contributorCount, 'contributor', 'contributors')}.
                     </>
                   )}
                 </span>

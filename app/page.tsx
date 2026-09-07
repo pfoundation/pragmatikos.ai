@@ -1,5 +1,6 @@
 import { Anatomy } from '@/components/site/anatomy';
 import { Blindspot } from '@/components/site/blindspot';
+import { Caveats } from '@/components/site/caveats';
 import { Contribute } from '@/components/site/contribute';
 import { ContributionFlow } from '@/components/site/contribution-flow';
 import { Header } from '@/components/site/header';
@@ -23,6 +24,7 @@ export default function Page() {
           <Blindspot />
           <Anatomy />
           <Recorder />
+          <Caveats />
           <Contribute />
           <ContributionFlow />
           <footer className="border-border border-t">
