@@ -4,6 +4,13 @@ on:
   push:
     branches: [master]
   workflow_dispatch: {}
+  workflow_call:
+    inputs:
+      ref:
+        description: Git ref to build (defaults to the triggering commit)
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: read
@@ -19,6 +26,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.sha }}
       - uses: oven-sh/setup-bun@v2
       - run: bun install
       - run: bun run build

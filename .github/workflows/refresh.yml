@@ -1,0 +1,54 @@
+name: refresh
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  pool:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - run: bun run pool
+        env:
+          CLICKHOUSE_URL: ${{ secrets.CLICKHOUSE_URL }}
+          CLICKHOUSE_USER: ${{ secrets.CLICKHOUSE_USER }}
+          CLICKHOUSE_PASSWORD: ${{ secrets.CLICKHOUSE_PASSWORD }}
+      - name: Reject local paths and session ids
+        run: |
+          if grep -rEn '/home|ses_[A-Za-z0-9]+' data/pool.json; then
+            echo 'pool.json leaks local paths or session ids' >&2
+            exit 1
+          fi
+      - name: Commit refreshed pool
+        run: |
+          if git diff --quiet -- data/pool.json; then
+            echo 'pool unchanged'
+            exit 0
+          fi
+          generated=$(jq -r .meta.generated data/pool.json)
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add data/pool.json
+          git commit -m "Pool refresh: ${generated}"
+          git push
+
+  pages:
+    needs: pool
+    uses: ./.github/workflows/pages.yml
+    with:
+      ref: master
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
