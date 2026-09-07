@@ -1,12 +1,4 @@
 import { Reveal } from '@/lib/reveal';
-import { contributorCount, fmtInt, meta, plural, rankedFamPairCount, topFamPairShare } from '@/lib/score';
-
-// Revisit this prose once the pool is no longer small and lopsided (roughly: contributors in the
-// dozens, or the largest pairing's share under half). The numbers below are live; the framing is not.
-const poolSentence =
-  typeof meta.judged === 'number' && contributorCount !== null && topFamPairShare !== null
-    ? `${fmtInt(meta.judged)} cycles from ${contributorCount} ${plural(contributorCount, 'contributor', 'contributors')}, across ${rankedFamPairCount} family pairings — ${topFamPairShare}% of them from one pairing.`
-    : 'A small pool, unevenly spread across pairings.';
 
 const SHORTFALLS: Array<[string, string]> = [
   [
@@ -14,13 +6,12 @@ const SHORTFALLS: Array<[string, string]> = [
     'The developers who run one pairing are not the developers who run another, and they are not working the same tasks. Skill, repo and task difficulty can move a score as much as the models do. “Ranked by what ships” is a correlation. Read it as one.',
   ],
   [
-    'Small, and uneven',
-    `${poolSentence} Groups near the ten-cycle floor are shrunk toward the pool, which guards against flukes but does not stand in for evidence. Two scores a point or two apart are a tie.`,
+    'Limited data',
+    'The sample is still small, and some setups have been used more than others. Rankings may shift as more people contribute. A slightly higher score doesn’t necessarily mean a better setup.',
   ],
-  ['Self-selected', 'Everyone in the pool installed a plugin and left sharing on. The ranking says nothing about developers who did not.'],
   [
     'Shipped is a floor, not a grade',
-    'A commit means the work landed. It does not mean it survived review, was never reverted, or was any good.',
+    'Following work through review and merge varies across projects. A git commit is simpler to track, so we use it as the bare minimum for “shipped.” It doesn’t mean the work was reviewed, merged, or released.',
   ],
 ];
 
@@ -43,9 +34,9 @@ export function Caveats() {
           <p className="font-mono text-xs text-primary">where it falls short</p>
           <h2 className="mt-1 text-2xl font-semibold tracking-tight md:text-3xl">A hypothesis to try, not a verdict</h2>
           <p className="text-muted-foreground mt-2 max-w-3xl text-sm leading-relaxed">
-            Pragmatikos reads sessions after the fact. Nobody assigned pairings to developers or tasks, so the ranking says which setups
-            shipped for the people who ran them — not which setup would ship for you. Here is where that bites, and what we intend to do
-            about it.
+            Pragmatikos reads sessions after the fact, based on voluntarily shared sessions. Nobody assigned pairings to developers or
+            tasks, so the ranking says which setups shipped for the people who ran them — not which setup would ship for you. Here is where
+            that bites, and what we intend to do about it.
           </p>
         </Reveal>
         <div className="mt-6 grid items-start gap-8 md:grid-cols-[7fr_4fr]">

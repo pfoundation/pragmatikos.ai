@@ -170,15 +170,6 @@ export const impossibleCount: number | null = typeof metaExtra.impossible === 'n
 /** Contributor count stamped by `bun run pool`. Hidden in the UI if absent (pre-v3 pool). */
 export const contributorCount: number | null = typeof metaExtra.contributors === 'number' ? metaExtra.contributors : null;
 
-/** Ranked family pairings and the largest pairing's share of judged cycles, for the Caveats section. */
-const rankedFamPairs = (views.famCombo?.groups ?? []).filter(
-  (g) => g.hjudged >= (typeof metaExtra.minJudged === 'number' ? metaExtra.minJudged : 10),
-);
-export const rankedFamPairCount: number = rankedFamPairs.length;
-const topFamJudged = rankedFamPairs.reduce((m, g) => Math.max(m, g.hjudged), 0);
-export const topFamPairShare: number | null =
-  typeof meta.judged === 'number' && meta.judged > 0 && topFamJudged > 0 ? Math.round((100 * topFamJudged) / meta.judged) : null;
-
 export const plural = (n: number, one: string, many: string): string => (n === 1 ? one : many);
 
 export type GroupKey = 'model' | 'family' | 'effort';
