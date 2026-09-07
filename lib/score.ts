@@ -141,7 +141,7 @@ export type ScoreView = {
   span: number;
 };
 
-export type ViewKey = 'model' | 'family' | 'modelEffort' | 'modelCombo' | 'famCombo';
+export type ViewKey = 'model' | 'family' | 'modelEffort' | 'modelCombo' | 'famCombo' | 'modelEffortCombo';
 
 export const views = pool.views as unknown as Record<ViewKey, ScoreView>;
 export const meta = pool.meta;
@@ -173,7 +173,7 @@ export const GROUP_LABELS: Record<GroupKey, string> = {
 export const VIEW_FOR_GROUP: Record<GroupKey, ViewKey> = {
   model: 'modelCombo',
   family: 'famCombo',
-  effort: 'modelEffort',
+  effort: 'modelEffortCombo',
 };
 
 const intFmt = new Intl.NumberFormat('en-US');

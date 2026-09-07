@@ -105,25 +105,20 @@ async function main() {
   }
   const { prod, combo } = accumulate(facts);
 
-  const tally = (needPhases: boolean) => {
-    let judged = 0;
-    let shipped = 0;
-    let shipJudged = 0;
-    let pending = 0;
-    let impossible = 0;
-    for (const f of facts) {
-      if (needPhases && (f.pm === null || f.bm === null)) continue;
-      if (!isJudged(f)) continue;
-      judged += 1;
-      if (f.tshipe === 0) shipJudged += 1;
-      else if (f.tshipe === 1) pending += 1;
-      else impossible += 1;
-      if (f.tship) shipped += 1;
-    }
-    return { judged, shipped, shipJudged, pending, impossible };
-  };
-  const meta = tally(true);
-  const off = tally(false);
+  let judged = 0;
+  let shipped = 0;
+  let shipJudged = 0;
+  let pending = 0;
+  let impossible = 0;
+  for (const f of facts) {
+    if (f.pm === null || f.bm === null) continue;
+    if (!isJudged(f)) continue;
+    judged += 1;
+    if (f.tshipe === 0) shipJudged += 1;
+    else if (f.tshipe === 1) pending += 1;
+    else impossible += 1;
+    if (f.tship) shipped += 1;
+  }
 
   const contributors = JSON.parse(installs).n as number;
   const schemaRows: { schema: number; n: number }[] = [];
@@ -143,8 +138,11 @@ async function main() {
       generated: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
       start: dayMin,
       end: dayMax,
-      ...meta,
-      off,
+      judged,
+      shipped,
+      shipJudged,
+      pending,
+      impossible,
       contributors,
       schema,
       minJudged: MIN_JUDGED,
@@ -165,7 +163,7 @@ async function main() {
   console.log(
     `pool: ${facts.length} cycles from ${contributors} contributor(s)${prev}, generated ${out.meta.generated}, ` +
       `schema=${schema}, model=${out.views.model.groups.length} family=${out.views.family.groups.length} ` +
-      `modelEffort=${out.views.modelEffort.groups.length} modelCombo=${out.views.modelCombo.groups.length} famCombo=${out.views.famCombo.groups.length} -> ${decodeURIComponent(OUT.pathname)}`,
+      `modelEffort=${out.views.modelEffort.groups.length} modelCombo=${out.views.modelCombo.groups.length} famCombo=${out.views.famCombo.groups.length} modelEffortCombo=${out.views.modelEffortCombo.groups.length} -> ${decodeURIComponent(OUT.pathname)}`,
   );
 }
 

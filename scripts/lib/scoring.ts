@@ -214,7 +214,7 @@ export type CycleFacts = {
 };
 
 export type ProdRow = Acc & { m: string; p: string; v: string };
-export type ComboRow = Acc & { pm: string; bm: string };
+export type ComboRow = Acc & { pm: string; bm: string; pv: string; bv: string };
 
 export function isJudged(f: CycleFacts): boolean {
   return f.top && f.a > 0 && f.tedits > 0 && f.tpaths > 0;
@@ -265,7 +265,7 @@ export function accumulate(rows: Iterable<CycleFacts>): {
     const ck = `${f.pm}|${f.pp}|${f.pv}|${f.bm}|${f.bp}|${f.bv}`;
     let c = combo.get(ck);
     if (!c) {
-      c = { ...blank(), latBag: [] as [number, number][], pm: f.pm, bm: f.bm };
+      c = { ...blank(), latBag: [] as [number, number][], pm: f.pm, bm: f.bm, pv: f.pv ?? '(none)', bv: f.bv ?? '(none)' };
       combo.set(ck, c);
     }
     addCycle(c, f);
@@ -434,8 +434,6 @@ export type SampleMeta = {
   minJudged: number;
   evidenceK: number;
   weights: string;
-  /** Same counts over all judged cycles (no both-phases requirement), for the off-view diff. */
-  off?: { judged: number; shipped: number; shipJudged: number; pending: number; impossible: number };
 };
 
 export function buildOutput(input: ViewInput, meta: SampleMeta) {
@@ -448,7 +446,7 @@ export function buildOutput(input: ViewInput, meta: SampleMeta) {
     return { key: f, hue: hueOf(f) };
   });
   const effortGroups = groupUp(input.prod.values(), (r) => ({
-    key: `${r.m} (${r.v})`,
+    key: `${r.m}:${r.v}`,
     hue: hueOf(familyOf(r.m)),
   }));
   const comboGroups = groupUp(input.combo.values(), (r) => ({
@@ -459,6 +457,10 @@ export function buildOutput(input: ViewInput, meta: SampleMeta) {
     const key = `${familyOf(r.pm)}→${familyOf(r.bm)}`;
     return { key, hue: hueOf(familyOf(r.bm)) };
   });
+  const effortComboGroups = groupUp(input.combo.values(), (r) => ({
+    key: `${r.pm}:${r.pv}→${r.bm}:${r.bv}`,
+    hue: hueOf(familyOf(r.bm)),
+  }));
   return {
     meta: { ...meta },
     views: {
@@ -467,6 +469,7 @@ export function buildOutput(input: ViewInput, meta: SampleMeta) {
       modelEffort: finish(effortGroups, (k) => k),
       modelCombo: finish(comboGroups, (k) => k.split('→').join(' → ')),
       famCombo: finish(famComboGroups, (k) => k.split('→').join(' → ')),
+      modelEffortCombo: finish(effortComboGroups, (k) => k.split('→').join(' → ')),
     },
   };
 }

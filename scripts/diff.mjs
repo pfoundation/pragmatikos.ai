@@ -2,7 +2,8 @@
 // Cell-by-cell diff: pragma data/sample.json vs the ocInsights deck's #otable
 // at two configurations scripts/sample.ts mirrors: famCombo at deck defaults
 // (family, planner→builder combos, weighted, all time, small filter off) and
-// modelEffort (model + effort grouping, role off). Usage: bun scripts/diff.mjs
+// modelEffortCombo (model + effort grouping, planner→builder combos).
+// Usage: bun scripts/diff.mjs
 // Fails loudly on any cell outside display-rounding tolerance.
 import path from 'node:path';
 import { readFileSync } from 'node:fs';
@@ -102,16 +103,17 @@ async function checkView(tag, sampGroups, wantMeta) {
 }
 
 const n1 = await checkView('famCombo', sample.views.famCombo.groups, sample.meta);
-// Effort view: model + effort grouping with role off (per-session grouping,
-// the configuration sample.modelEffort mirrors).
+// Effort view: model + effort grouping with planner→builder combos (the
+// configuration sample.modelEffortCombo mirrors). Role is already combo at
+// deck defaults; click it explicitly so the check survives default changes.
 await page.locator('#ogroup [data-g=effort]').click();
-await page.locator('#orole [data-r=off]').click();
+await page.locator('#orole [data-r=combo]').click();
 await page.waitForTimeout(300);
-const n2 = await checkView('modelEffort', sample.views.modelEffort.groups, sample.meta.off);
+const n2 = await checkView('modelEffortCombo', sample.views.modelEffortCombo.groups, sample.meta);
 
 await browser.close();
 if (fails.length) {
   console.log(`DIFF FAIL:\n${fails.map((f) => '  - ' + f).join('\n')}`);
   process.exit(1);
 }
-console.log(`diff: famCombo ${n1} + modelEffort ${n2} groups × ${COLS.length} cells match, imputed flags agree, meta agrees`);
+console.log(`diff: famCombo ${n1} + modelEffortCombo ${n2} groups × ${COLS.length} cells match, imputed flags agree, meta agrees`);
