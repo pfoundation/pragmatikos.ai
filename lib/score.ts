@@ -184,9 +184,9 @@ export const plural = (n: number, one: string, many: string): string => (n === 1
 export type GroupKey = 'model' | 'family' | 'effort';
 
 export const GROUP_LABELS: Record<GroupKey, string> = {
-  model: 'Models',
   family: 'Families',
-  effort: 'Model + effort',
+  model: 'Models',
+  effort: 'Model + Effort',
 };
 
 /** Scorecard tab → pool view. Guarded at render: a stale pool.json may lack newer views. */
