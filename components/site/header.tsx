@@ -2,6 +2,8 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { GithubIcon } from '@/components/ui/github-icon';
+import { GITHUB_REPO } from '@/lib/site';
 import { Moon, Sun } from 'lucide-react';
 import { useState } from 'react';
 
@@ -31,7 +33,12 @@ export function Header() {
             </a>
           ))}
         </nav>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-1">
+          <Button variant="ghost" size="icon-sm" asChild>
+            <a href={GITHUB_REPO} target="_blank" rel="noreferrer" aria-label="GitHub repository">
+              <GithubIcon />
+            </a>
+          </Button>
           <Button
             variant="ghost"
             size="icon-sm"

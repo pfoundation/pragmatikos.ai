@@ -6,6 +6,10 @@ Benchmarks test models on controlled tasks. Pragmatikos looks at real developer 
 
 The site combines interactive rankings, a radar comparison of family pairings, an explanation of the scoring, and instructions for contributing sessions through ocInsights. Rankings are observational and come from a small, self-selected pool; treat them as a hypothesis to try.
 
+## Related
+
+- [oc2usage](https://github.com/pfoundation/oc2usage) (`@pfoundation/oc2usage`) is a separate OpenCode plugin that shows provider usage limits in the TUI footer and a `/usage` dialog. It covers Anthropic, Grok, OpenCode Go, Meta, and OpenAI using the credentials from OpenCode's own `/connect` setup, with no extra keys. It is a sibling project, not part of this site.
+
 ## Stack
 
 - Next.js 16 App Router, React 19, and TypeScript.
@@ -125,6 +129,7 @@ Ten axes are combined into six weighted tiers:
 | `lib/score.ts` | Pool access, score types, axis metadata, and display helpers. |
 | `lib/reveal.tsx` | Scroll reveals and animation hooks. |
 | `lib/hot.tsx` | Shared chart and scorecard highlighting state. |
+| `lib/site.ts` | Shared site constants such as the GitHub repo URL. |
 | `data/pool.json` | Committed snapshot used by the site. |
 | `scripts/` | Pool refresh, sample generation, parity check, and shared scoring math. |
 | `.github/workflows/` | Static deployment and manual pool-refresh workflows. |
