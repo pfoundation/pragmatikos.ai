@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Cell-by-cell diff: pragma data/sample.json vs the ocInsights deck's #otable
+// Cell-by-cell diff: pragmatikos.ai data/sample.json vs the ocInsights deck's #otable
 // at two configurations scripts/sample.ts mirrors: famCombo at deck defaults
 // (family, planner→builder combos, weighted, all time, small filter off) and
 // modelEffortCombo (model + effort grouping, planner→builder combos).

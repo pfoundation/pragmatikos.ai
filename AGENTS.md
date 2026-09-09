@@ -1,4 +1,4 @@
-# AGENTS.md — pragma (Pragmatikos site)
+# AGENTS.md — pragmatikos.ai (Pragmatikos site)
 
 Product site for Pragmatikos, the overall-score reporting tool. The visitor lands on a why-first hero, then the rankings with pooled example output, then an invitation to add their sessions. The site introduces the tool; it is not a showcase of personal data.
 
