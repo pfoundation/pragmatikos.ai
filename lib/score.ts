@@ -11,6 +11,7 @@ export interface AxisMeta {
   key: AxisKey;
   label: string;
   short: string;
+  desc: string;
   hi: boolean;
   kind: AxisKind;
   tier: string;
@@ -18,32 +19,106 @@ export interface AxisMeta {
 }
 
 export const AXES: AxisMeta[] = [
-  { key: 'shipr', label: 'Ship rate', short: 'Ship %', hi: true, kind: 'odds', tier: 'outcome', format: (v) => `${v.toFixed(0)}%` },
   {
-    key: 'oneshot',
-    label: 'One-shot rate',
-    short: 'One-shot %',
+    key: 'shipr',
+    label: 'Ship rate',
+    short: 'Ship %',
+    desc: 'Share of ship-judged cycles whose edits landed in a commit.',
     hi: true,
     kind: 'odds',
     tier: 'outcome',
     format: (v) => `${v.toFixed(0)}%`,
   },
-  { key: 'ttss', label: 'Turns per ship', short: 'Turns/ship', hi: false, kind: 'ratio', tier: 'cost', format: (v) => v.toFixed(1) },
-  { key: 'hps', label: 'Hours per ship', short: 'Hours/ship', hi: false, kind: 'ratio', tier: 'cost', format: (v) => v.toFixed(1) },
-  { key: 'dpss', label: 'Dollars per ship', short: '$/ship', hi: false, kind: 'ratio', tier: 'cost', format: (v) => `$${v.toFixed(2)}` },
-  { key: 'eerrp', label: 'Tool errors', short: 'Tool err %', hi: false, kind: 'err', tier: 'precision', format: (v) => `${v.toFixed(1)}%` },
-  { key: 'abortp', label: 'Aborts', short: 'Abort %', hi: false, kind: 'err', tier: 'precision', format: (v) => `${v.toFixed(1)}%` },
+  {
+    key: 'oneshot',
+    label: 'One-shot rate',
+    short: 'One-shot %',
+    desc: 'Share of shipped cycles needing only the request and plan approval.',
+    hi: true,
+    kind: 'odds',
+    tier: 'outcome',
+    format: (v) => `${v.toFixed(0)}%`,
+  },
+  {
+    key: 'ttss',
+    label: 'Turns per ship',
+    short: 'Turns/ship',
+    desc: 'Human turns per shipped cycle.',
+    hi: false,
+    kind: 'ratio',
+    tier: 'cost',
+    format: (v) => v.toFixed(1),
+  },
+  {
+    key: 'hps',
+    label: 'Hours per ship',
+    short: 'Hours/ship',
+    desc: 'Active hours per shipped cycle.',
+    hi: false,
+    kind: 'ratio',
+    tier: 'cost',
+    format: (v) => v.toFixed(1),
+  },
+  {
+    key: 'dpss',
+    label: 'Dollars per ship',
+    short: '$/ship',
+    desc: 'Recorded cost per shipped cycle with cost data.',
+    hi: false,
+    kind: 'ratio',
+    tier: 'cost',
+    format: (v) => `$${v.toFixed(2)}`,
+  },
+  {
+    key: 'eerrp',
+    label: 'Tool errors',
+    short: 'Tool err %',
+    desc: 'Tool errors per 100 edits.',
+    hi: false,
+    kind: 'err',
+    tier: 'precision',
+    format: (v) => `${v.toFixed(1)}%`,
+  },
+  {
+    key: 'abortp',
+    label: 'Aborts',
+    short: 'Abort %',
+    desc: 'Share of cycles with a human-stopped tool call.',
+    hi: false,
+    kind: 'err',
+    tier: 'precision',
+    format: (v) => `${v.toFixed(1)}%`,
+  },
   {
     key: 'verp',
     label: 'Verified cycles',
     short: 'Verified %',
+    desc: 'Share of cycles with a build, test or check after the last edit.',
     hi: true,
     kind: 'odds',
     tier: 'discipline',
     format: (v) => `${v.toFixed(0)}%`,
   },
-  { key: 'ept', label: 'Edits per turn', short: 'Edits/turn', hi: true, kind: 'ratio', tier: 'efficiency', format: (v) => v.toFixed(1) },
-  { key: 'lat', label: 'Time per step', short: 'Time/step', hi: false, kind: 'ratio', tier: 'latency', format: (v) => v.toFixed(1) },
+  {
+    key: 'ept',
+    label: 'Edits per turn',
+    short: 'Edits/turn',
+    desc: 'Edit tool calls per human turn.',
+    hi: true,
+    kind: 'ratio',
+    tier: 'efficiency',
+    format: (v) => v.toFixed(1),
+  },
+  {
+    key: 'lat',
+    label: 'Time per step',
+    short: 'Time/step',
+    desc: 'Median seconds per assistant step.',
+    hi: false,
+    kind: 'ratio',
+    tier: 'latency',
+    format: (v) => v.toFixed(1),
+  },
 ];
 
 export interface TierMeta {

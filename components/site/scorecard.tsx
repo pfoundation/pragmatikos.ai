@@ -181,7 +181,7 @@ function Strips({
   );
 }
 
-function Arithmetic({ group, view }: { group: ScoreGroup; view: (typeof views)[ViewKey] }) {
+function Breakdown({ group, view }: { group: ScoreGroup; view: (typeof views)[ViewKey] }) {
   const tiers = TIERS.map((t) => {
     const ps = t.axes
       .map((k) => {
@@ -212,6 +212,7 @@ function Arithmetic({ group, view }: { group: ScoreGroup; view: (typeof views)[V
               {imputed ? ' (no data, scored as pool)' : ''}
             </span>
           </p>
+          <p className="text-muted-foreground mt-0.5 text-xs">{t.desc}</p>
           <div className="mt-1.5 grid grid-cols-2 gap-2 sm:grid-cols-3">
             {ps.map(({ a, v, c }) => (
               <div
@@ -223,6 +224,7 @@ function Arithmetic({ group, view }: { group: ScoreGroup; view: (typeof views)[V
                   {a.short}
                 </p>
                 <p className="mt-0.5 font-mono text-sm">{v === null ? '—' : a.format(v)}</p>
+                <p className="text-muted-foreground mt-1 text-[11px] leading-snug">{a.desc}</p>
                 <div className="bg-muted relative mt-1.5 h-1.5">
                   <div className="bg-muted-foreground absolute top-0 h-full w-px" style={{ left: '50%' }} />
                   <div
@@ -286,7 +288,7 @@ export function Scorecard() {
   const [group, setGroup] = useState<GroupKey>('family');
   const [hot, setHot] = useState<string | null>(null);
   const [sel, setSel] = useState<string | null>(null);
-  const [arith, setArith] = useState(false);
+  const [breakdown, setBreakdown] = useState(false);
   const viewKey: ViewKey = VIEW_FOR_GROUP[group];
   const view = views[viewKey];
   const [, setSharedHot] = useSharedHot();
@@ -384,7 +386,7 @@ export function Scorecard() {
                 {ranked.map((g, i) => {
                   const s = scoreOf(g);
                   const dim = hot !== null && hot !== g.id;
-                  const selected = selG?.id === g.id && arith;
+                  const selected = selG?.id === g.id && breakdown;
                   return (
                     <div
                       key={g.id}
@@ -400,16 +402,16 @@ export function Scorecard() {
                       onMouseEnter={() => setHotBoth(g.id)}
                       onClick={() => {
                         setSel(g.id);
-                        setArith(true);
+                        setBreakdown(true);
                       }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
                           setSel(g.id);
-                          setArith(true);
+                          setBreakdown(true);
                         }
                       }}
-                      title={`${g.label}: ${s === null ? '—' : `${s.toFixed(0)} / 100`} — click to show the arithmetic`}
+                      title={`${g.label}: ${s === null ? '—' : `${s.toFixed(0)} / 100`} — click to show the breakdown`}
                     >
                       <span className="text-muted-foreground font-mono text-xs">{String(i + 1).padStart(2, '0')}</span>
                       <div className="min-w-0">
@@ -434,12 +436,12 @@ export function Scorecard() {
               <Strips groups={ranked} view={view} hot={hot} setHot={setHotBoth} />
             </div>
             <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
-              <Button variant="outline" size="sm" onClick={() => setArith((a) => !a)} aria-expanded={arith}>
-                Arithmetic
-                <ChevronDown className={arith ? 'rotate-180 transition-transform' : 'transition-transform'} />
+              <Button variant="outline" size="sm" onClick={() => setBreakdown((a) => !a)} aria-expanded={breakdown}>
+                Breakdown
+                <ChevronDown className={breakdown ? 'rotate-180 transition-transform' : 'transition-transform'} />
               </Button>
             </div>
-            {arith && selG && <Arithmetic group={selG} view={view} />}
+            {breakdown && selG && <Breakdown group={selG} view={view} />}
           </CardContent>
         </Card>
       </div>
