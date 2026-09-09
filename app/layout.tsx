@@ -10,9 +10,16 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem('pragmatikos-theme');if(t==='light'){document.documentElement.classList.remove('dark')}else{document.documentElement.classList.add('dark')}}catch(e){}`,
+          }}
+        />
+      </head>
       <body>
-        <div id="theme-root" className="dark font-sans bg-background text-foreground min-h-screen antialiased">
+        <div id="theme-root" className="font-sans bg-background text-foreground min-h-screen antialiased">
           {children}
         </div>
       </body>

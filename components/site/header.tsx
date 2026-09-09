@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { GithubIcon } from '@/components/ui/github-icon';
 import { GITHUB_REPO } from '@/lib/site';
 import { Moon, Sun } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const NAV = [
   ['Rankings', '#score'],
@@ -18,6 +18,9 @@ const NAV = [
 
 export function Header() {
   const [dark, setDark] = useState(true);
+  useEffect(() => {
+    setDark(document.documentElement.classList.contains('dark'));
+  }, []);
   return (
     <header className="bg-shell border-shell-border sticky top-0 z-20 border-b">
       <div className="mx-auto flex h-[50px] max-w-6xl items-center gap-6 px-6">
@@ -34,21 +37,28 @@ export function Header() {
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-1">
-          <Button variant="ghost" size="icon-sm" asChild>
-            <a href={GITHUB_REPO} target="_blank" rel="noreferrer" aria-label="GitHub repository">
-              <GithubIcon />
-            </a>
-          </Button>
           <Button
             variant="ghost"
             size="icon-sm"
             aria-label={dark ? 'Switch to light theme' : 'Switch to dark theme'}
             onClick={() => {
-              document.getElementById('theme-root')?.classList.toggle('dark');
-              setDark((d) => !d);
+              const next = !dark;
+              setDark(next);
+              document.documentElement.classList.toggle('dark', next);
+              document.getElementById('theme-root')?.classList.toggle('dark', next);
+              try {
+                localStorage.setItem('pragmatikos-theme', next ? 'dark' : 'light');
+              } catch {
+                // storage unavailable (private mode) — theme still applies for this visit
+              }
             }}
           >
             {dark ? <Sun /> : <Moon />}
+          </Button>
+          <Button variant="ghost" size="icon-sm" asChild>
+            <a href={GITHUB_REPO} target="_blank" rel="noreferrer" aria-label="GitHub repository">
+              <GithubIcon />
+            </a>
           </Button>
         </div>
       </div>
